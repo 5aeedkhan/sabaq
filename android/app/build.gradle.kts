@@ -1,5 +1,8 @@
 plugins {
     id("com.android.application")
+    // START: FlutterFire Configuration
+    id("com.google.gms.google-services")
+    // END: FlutterFire Configuration
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
@@ -24,7 +27,7 @@ android {
         applicationId = "com.example.sabaq"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        minSdk = 21 // Set minimum SDK version for Firebase
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -37,6 +40,17 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+}
+
+dependencies {
+    // Add the Firebase BoM
+    implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
+    // Add Firebase Analytics
+    implementation("com.google.firebase:firebase-analytics")
+    // Add Firebase Auth
+    implementation("com.google.firebase:firebase-auth")
+    // Add Cloud Firestore
+    implementation("com.google.firebase:firebase-firestore")
 }
 
 flutter {

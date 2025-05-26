@@ -3,6 +3,7 @@ import 'package:path/path.dart';
 import '../models/student.dart';
 import '../models/performance.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/foundation.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -12,27 +13,37 @@ class DatabaseHelper {
 
   Future<Database> get database async {
     if (_database != null) return _database!;
+    debugPrint('Initializing database...');
     _database = await _initDB('sabaq.db');
+    debugPrint('Database initialized successfully');
     return _database!;
   }
 
   Future<Database> _initDB(String filePath) async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
+    debugPrint('Database path: $path');
 
     return await openDatabase(
       path,
-      version: 2,
+      version: 4,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
   }
 
   Future<void> _createDB(Database db, int version) async {
+    debugPrint('Creating database tables...');
     await db.execute('''
       CREATE TABLE students (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL
+        name TEXT NOT NULL,
+        father_name TEXT,
+        student_id TEXT,
+        phone_number TEXT,
+        age INTEGER,
+        darja TEXT,
+        image_path TEXT
       )
     ''');
 
@@ -48,24 +59,46 @@ class DatabaseHelper {
         FOREIGN KEY (studentId) REFERENCES students (id)
       )
     ''');
+    debugPrint('Database tables created successfully');
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    debugPrint('Upgrading database from version $oldVersion to $newVersion');
     if (oldVersion < 2) {
       await db.execute('ALTER TABLE performances ADD COLUMN description TEXT;');
     }
+    if (oldVersion < 4) {
+      await db.execute('ALTER TABLE students ADD COLUMN image_path TEXT;');
+    }
+    debugPrint('Database upgrade completed');
   }
 
   // Student operations
   Future<int> insertStudent(Student student) async {
-    final db = await database;
-    return await db.insert('students', student.toMap());
+    try {
+      final db = await database;
+      debugPrint('Inserting student: ${student.name}');
+      final id = await db.insert('students', student.toMap());
+      debugPrint('Student inserted with id: $id');
+      return id;
+    } catch (e) {
+      debugPrint('Error inserting student: $e');
+      rethrow;
+    }
   }
 
   Future<List<Student>> getAllStudents() async {
-    final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query('students');
-    return List.generate(maps.length, (i) => Student.fromMap(maps[i]));
+    try {
+      final db = await database;
+      debugPrint('Fetching all students...');
+      final List<Map<String, dynamic>> maps = await db.query('students');
+      final students = List.generate(maps.length, (i) => Student.fromMap(maps[i]));
+      debugPrint('Fetched ${students.length} students');
+      return students;
+    } catch (e) {
+      debugPrint('Error fetching students: $e');
+      rethrow;
+    }
   }
 
   Future<int> deleteStudent(int id) async {

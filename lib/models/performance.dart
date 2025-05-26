@@ -14,7 +14,7 @@ class Performance {
     required this.sabaq,
     required this.sabqi,
     required this.manzil,
-    this.description,
+    this.description, String? imagePath,
   });
 
   Map<String, dynamic> toMap() {

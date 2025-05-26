@@ -28,9 +28,10 @@ class _AllStudentsPerformanceOverviewScreenState extends State<AllStudentsPerfor
   void didChangeDependencies() {
     super.didChangeDependencies();
     // Initial data load
-    if (_students.isEmpty) {
-      _loadData();
-    }
+    // We no longer need this here as loadData is called in initState and on refresh
+    // if (_students.isEmpty) {
+    //   _loadData();
+    // }
   }
 
   Future<void> _loadData() async {
@@ -43,10 +44,12 @@ class _AllStudentsPerformanceOverviewScreenState extends State<AllStudentsPerfor
     try {
       // Load students
       final studentProvider = context.read<StudentProvider>();
-      await studentProvider.loadStudents();
+      // No need to await here as we listen via watch
+      studentProvider.loadStudents(); // Assuming loadStudents updates the provider state
 
       if (!mounted) return;
 
+      // Access students from the provider after loading
       _students = studentProvider.students;
 
       // Determine recent dates (e.g., last 5 days)
@@ -78,7 +81,6 @@ class _AllStudentsPerformanceOverviewScreenState extends State<AllStudentsPerfor
     final dateString = DateFormat('yyyy-MM-dd').format(date);
     // Read directly from the provider's state
     final performancesForStudent = context.watch<PerformanceProvider>().overviewPerformances[studentId];
-    // print('DEBUG: _getPerformance for student $studentId, dateString $dateString. Map entry exists: ${performancesForStudent?.containsKey(dateString)}'); // Keep or remove debug print as needed
     return performancesForStudent?[dateString];
   }
 
@@ -125,6 +127,29 @@ class _AllStudentsPerformanceOverviewScreenState extends State<AllStudentsPerfor
     } catch (e) {
       print('ASPOS: Error saving performance from overview: $e');
     }
+  }
+
+  // Function to show full description in a dialog
+  void _showFullDescription(BuildContext context, String description) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Full Description'),
+          content: SingleChildScrollView(
+            child: Text(description),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Close'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -185,6 +210,12 @@ class _AllStudentsPerformanceOverviewScreenState extends State<AllStudentsPerfor
     final bool sabqi = performance?.sabqi ?? false;
     final bool manzil = performance?.manzil ?? false;
     final String description = performance?.description ?? '';
+
+    // Define maximum length for displayed description
+    // const int maxDescriptionLength = 50; // Adjust as needed
+    // final String displayedDescription = description.length > maxDescriptionLength
+    //     ? '${description.substring(0, maxDescriptionLength)}...'
+    //     : description;
 
     return Container(
       padding: const EdgeInsets.all(4.0),
@@ -247,11 +278,20 @@ class _AllStudentsPerformanceOverviewScreenState extends State<AllStudentsPerfor
           ),
           if (description.isNotEmpty) ...[
             const SizedBox(height: 4),
-            Text(
-              description,
-              style: const TextStyle(fontSize: 10, fontStyle: FontStyle.italic),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+            // Truncated Description with Tap to show full description
+            GestureDetector(
+              onTap: () {
+                _showFullDescription(context, description);
+              },
+              child: const Text(
+                'Description', // Show the literal word "Description"
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.blue, // Indicate it's tappable
+                  decoration: TextDecoration.underline,
+                ),
+                // maxLines and overflow are not needed if showing a single word
+              ),
             ),
           ],
         ],

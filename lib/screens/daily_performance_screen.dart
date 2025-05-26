@@ -136,60 +136,62 @@ class _DailyPerformanceScreenState extends State<DailyPerformanceScreen> {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Date: ${DateFormat('MMMM d, y').format(_selectedDate)}',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 20),
-            CheckboxListTile(
-              title: const Text('Sabaq (New Lesson)'),
-              value: _sabaq,
-              onChanged: (bool? value) {
-                setState(() {
-                  _sabaq = value ?? false;
-                });
-              },
-            ),
-            CheckboxListTile(
-              title: const Text('Sabqi (Revision)'),
-              value: _sabqi,
-              onChanged: (bool? value) {
-                setState(() {
-                  _sabqi = value ?? false;
-                });
-              },
-            ),
-            CheckboxListTile(
-              title: const Text('Manzil (Retention)'),
-              value: _manzil,
-              onChanged: (bool? value) {
-                setState(() {
-                  _manzil = value ?? false;
-                });
-              },
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: _descriptionController,
-              decoration: const InputDecoration(
-                labelText: 'Description (e.g., Surah, Ayahs)',
-                border: OutlineInputBorder(),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Date: ${DateFormat('MMMM d, y').format(_selectedDate)}',
+                style: Theme.of(context).textTheme.titleLarge,
               ),
-              maxLines: 3,
-            ),
-            const SizedBox(height: 20),
-            Center(
-              child: ElevatedButton(
-                onPressed: _savePerformance,
-                child: const Text('Save Performance'),
+              const SizedBox(height: 20),
+              CheckboxListTile(
+                title: const Text('Sabaq (New Lesson)'),
+                value: _sabaq,
+                onChanged: (bool? value) {
+                  setState(() {
+                    _sabaq = value ?? false;
+                  });
+                },
               ),
-            ),
-          ],
+              CheckboxListTile(
+                title: const Text('Sabqi (Revision)'),
+                value: _sabqi,
+                onChanged: (bool? value) {
+                  setState(() {
+                    _sabqi = value ?? false;
+                  });
+                },
+              ),
+              CheckboxListTile(
+                title: const Text('Manzil (Retention)'),
+                value: _manzil,
+                onChanged: (bool? value) {
+                  setState(() {
+                    _manzil = value ?? false;
+                  });
+                },
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: _descriptionController,
+                decoration: const InputDecoration(
+                  labelText: 'Description (e.g., Surah, Ayahs)',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 3,
+              ),
+              const SizedBox(height: 20),
+              Center(
+                child: ElevatedButton(
+                  onPressed: _savePerformance,
+                  child: const Text('Save Performance'),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
