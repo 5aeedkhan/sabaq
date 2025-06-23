@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:sabaq/database/database_helper.dart';
+import 'package:sabaq/models/student.dart';
 import '../students/student_list_screen.dart';
 import 'login_screen.dart';
 
@@ -18,6 +20,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _nameController = TextEditingController();
   bool _isLoading = false;
   String? _errorMessage;
+  bool _obscurePassword = true;
 
   Future<void> _register() async {
     if (_formKey.currentState!.validate()) {
@@ -33,22 +36,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
               email: _emailController.text.trim(),
               password: _passwordController.text,
             );
-
-        // Add user details to Firestore
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(userCredential.user!.uid)
-            .set({
-              'name': _nameController.text.trim(),
-              'email': _emailController.text.trim(),
-              'createdAt': FieldValue.serverTimestamp(),
-            });
+        // Save user info locally (replace this with your local storage logic)
+        // Example: await LocalDatabase.saveUser(...);
+        // For now, just print to debug
+        debugPrint(
+          'User registered: \\${userCredential.user?.uid}, name: \\${_nameController.text.trim()}',
+        );
+        // (No longer insert as Student)
 
         if (mounted) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const StudentListScreen()),
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
           );
+          return; // Prevent further code execution after navigation
         }
       } on FirebaseAuthException catch (e) {
         setState(() {
@@ -94,9 +95,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
           }
         });
       } catch (e) {
+        print('Registration error: $e'); // Log the actual error
         setState(() {
           _errorMessage = 'An error occurred. Please try again.';
         });
+        return;
       } finally {
         if (mounted) {
           setState(() {
@@ -192,12 +195,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _passwordController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Password',
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.lock),
+                    suffixIcon: IconButton(
+                      icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
+                    ),
                   ),
-                  obscureText: true,
+                  obscureText: _obscurePassword,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your password';
