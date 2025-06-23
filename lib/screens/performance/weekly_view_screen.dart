@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../models/student.dart';
-import '../models/performance.dart';
-import '../providers/performance_provider.dart';
+import 'package:sabaq/models/student.dart';
+import 'package:sabaq/providers/performance_provider.dart';
+
 
 class WeeklyViewScreen extends StatefulWidget {
   final Student student;

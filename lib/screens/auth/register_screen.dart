@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'student_list_screen.dart';
+import '../students/student_list_screen.dart';
 import 'login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -30,18 +30,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
         // Create user with email and password
         UserCredential userCredential = await FirebaseAuth.instance
             .createUserWithEmailAndPassword(
-                email: _emailController.text.trim(),
-                password: _passwordController.text);
+              email: _emailController.text.trim(),
+              password: _passwordController.text,
+            );
 
         // Add user details to Firestore
         await FirebaseFirestore.instance
             .collection('users')
             .doc(userCredential.user!.uid)
             .set({
-          'name': _nameController.text.trim(),
-          'email': _emailController.text.trim(),
-          'createdAt': FieldValue.serverTimestamp(),
-        });
+              'name': _nameController.text.trim(),
+              'email': _emailController.text.trim(),
+              'createdAt': FieldValue.serverTimestamp(),
+            });
 
         if (mounted) {
           Navigator.pushReplacement(
@@ -54,35 +55,42 @@ class _RegisterScreenState extends State<RegisterScreen> {
           if (e.code == 'weak-password') {
             _errorMessage = 'The password provided is too weak.';
           } else if (e.code == 'email-already-in-use') {
-            _errorMessage = 'This email is already registered. Please login instead.';
+            _errorMessage =
+                'This email is already registered. Please login instead.';
             // Show login button when email is already in use
             WidgetsBinding.instance.addPostFrameCallback((_) {
               showDialog(
                 context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Account Exists'),
-                  content: const Text('This email is already registered. Would you like to login instead?'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Cancel'),
+                builder:
+                    (context) => AlertDialog(
+                      title: const Text('Account Exists'),
+                      content: const Text(
+                        'This email is already registered. Would you like to login instead?',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context); // Close dialog
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const LoginScreen(),
+                              ),
+                            );
+                          },
+                          child: const Text('Login'),
+                        ),
+                      ],
                     ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pop(context); // Close dialog
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (context) => const LoginScreen()),
-                        );
-                      },
-                      child: const Text('Login'),
-                    ),
-                  ],
-                ),
               );
             });
           } else {
-            _errorMessage = e.message ?? 'An error occurred during registration.';
+            _errorMessage =
+                e.message ?? 'An error occurred during registration.';
           }
         });
       } catch (e) {
@@ -117,7 +125,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
           builder: (BuildContext context) {
             return AlertDialog(
               title: const Text('Exit Registration'),
-              content: const Text('Are you sure you want to exit registration?'),
+              content: const Text(
+                'Are you sure you want to exit registration?',
+              ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(false),
@@ -125,9 +135,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(true),
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.red,
-                  ),
+                  style: TextButton.styleFrom(foregroundColor: Colors.red),
                   child: const Text('Yes'),
                 ),
               ],
@@ -137,9 +145,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         return shouldPop ?? false;
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Register'),
-        ),
+        appBar: AppBar(title: const Text('Register')),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
           child: Form(
@@ -148,6 +154,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                const SizedBox(height: 24),
+                Image.asset('assets/logo.png', width: 200, height: 200),
                 TextFormField(
                   controller: _nameController,
                   decoration: const InputDecoration(
@@ -224,26 +232,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  child:
+                      _isLoading
+                          ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
+                          : const Text(
+                            'Register',
+                            style: TextStyle(fontSize: 16),
                           ),
-                        )
-                      : const Text(
-                          'Register',
-                          style: TextStyle(fontSize: 16),
-                        ),
                 ),
                 const SizedBox(height: 16),
                 TextButton(
                   onPressed: () {
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (context) => const LoginScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => const LoginScreen(),
+                      ),
                     );
                   },
                   child: const Text('Already have an account? Login'),
@@ -255,4 +268,4 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
     );
   }
-} 
+}

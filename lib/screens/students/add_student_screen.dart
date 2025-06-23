@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/student_provider.dart';
 import 'dart:io'; // Import for File
-import 'package:image_picker/image_picker.dart'; // Import for ImagePicker
+import 'package:image_picker/image_picker.dart';
+import 'package:sabaq/providers/student_provider.dart';
 
 class AddStudentScreen extends StatefulWidget {
   const AddStudentScreen({super.key});

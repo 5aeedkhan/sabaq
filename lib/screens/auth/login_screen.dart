@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'student_list_screen.dart';
+import '../students/student_list_screen.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -25,11 +25,13 @@ class _LoginScreenState extends State<LoginScreen> {
       });
 
       try {
-        debugPrint('Attempting to sign in with email: ${_emailController.text.trim()}');
-        
+        debugPrint(
+          'Attempting to sign in with email: ${_emailController.text.trim()}',
+        );
+
         // First, try to sign out any existing user
         await FirebaseAuth.instance.signOut();
-        
+
         // Then attempt to sign in
         await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: _emailController.text.trim(),
@@ -60,7 +62,8 @@ class _LoginScreenState extends State<LoginScreen> {
         setState(() {
           switch (e.code) {
             case 'user-not-found':
-              _errorMessage = 'No user found with this email. Please register first.';
+              _errorMessage =
+                  'No user found with this email. Please register first.';
               break;
             case 'wrong-password':
               _errorMessage = 'Incorrect password. Please try again.';
@@ -69,10 +72,12 @@ class _LoginScreenState extends State<LoginScreen> {
               _errorMessage = 'Please enter a valid email address.';
               break;
             case 'user-disabled':
-              _errorMessage = 'This account has been disabled. Please contact support.';
+              _errorMessage =
+                  'This account has been disabled. Please contact support.';
               break;
             case 'too-many-requests':
-              _errorMessage = 'Too many failed attempts. Please try again later.';
+              _errorMessage =
+                  'Too many failed attempts. Please try again later.';
               break;
             default:
               _errorMessage = e.message ?? 'An error occurred during login.';
@@ -80,12 +85,12 @@ class _LoginScreenState extends State<LoginScreen> {
         });
       } catch (e) {
         debugPrint('General Error during login: $e');
-        
+
         // If we get the PigeonUserDetails error, try a different approach
         if (e.toString().contains('PigeonUserDetails')) {
           try {
             debugPrint('Attempting alternative login method');
-            
+
             // Try to get the current user directly
             final user = FirebaseAuth.instance.currentUser;
             if (user != null) {
@@ -93,7 +98,9 @@ class _LoginScreenState extends State<LoginScreen> {
               if (mounted) {
                 Navigator.pushAndRemoveUntil(
                   context,
-                  MaterialPageRoute(builder: (context) => const StudentListScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const StudentListScreen(),
+                  ),
                   (route) => false,
                 );
                 return;
@@ -103,7 +110,7 @@ class _LoginScreenState extends State<LoginScreen> {
             debugPrint('Alternative login failed: $retryError');
           }
         }
-        
+
         setState(() {
           _errorMessage = 'Login failed. Please try again.';
         });
@@ -142,9 +149,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(true),
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.red,
-                  ),
+                  style: TextButton.styleFrom(foregroundColor: Colors.red),
                   child: const Text('Yes'),
                 ),
               ],
@@ -154,9 +159,7 @@ class _LoginScreenState extends State<LoginScreen> {
         return shouldPop ?? false;
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Login'),
-        ),
+        appBar: AppBar(title: const Text('Login')),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
           child: Form(
@@ -165,6 +168,8 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                const SizedBox(height: 24),
+                Image.asset('assets/logo.png', width: 200, height: 200),
                 const SizedBox(height: 40),
                 TextFormField(
                   controller: _emailController,
@@ -203,6 +208,62 @@ class _LoginScreenState extends State<LoginScreen> {
                     return null;
                   },
                 ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () async {
+                      final TextEditingController resetEmailController = TextEditingController();
+                      final result = await showDialog<bool>(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: const Text('Reset Password'),
+                            content: TextField(
+                              controller: resetEmailController,
+                              keyboardType: TextInputType.emailAddress,
+                              decoration: const InputDecoration(
+                                labelText: 'Enter your email',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(false),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () async {
+                                  final email = resetEmailController.text.trim();
+                                  if (email.isEmpty || !email.contains('@')) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Please enter a valid email.')),
+                                    );
+                                    return;
+                                  }
+                                  try {
+                                    await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Password reset email sent! Check your inbox.')),
+                                    );
+                                    Navigator.of(context).pop(true);
+                                  } catch (e) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Error: \\${e.toString()}')),
+                                    );
+                                  }
+                                },
+                                child: const Text('Send'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                      // If cancelled, just return to login screen (do nothing)
+                    },
+                    child: const Text('Forgot Password?'),
+                  ),
+                ),
                 const SizedBox(height: 24),
                 if (_errorMessage != null)
                   Container(
@@ -227,26 +288,28 @@ class _LoginScreenState extends State<LoginScreen> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        )
-                      : const Text(
-                          'Login',
-                          style: TextStyle(fontSize: 16),
-                        ),
+                  child:
+                      _isLoading
+                          ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
+                          : const Text('Login', style: TextStyle(fontSize: 16)),
                 ),
                 const SizedBox(height: 16),
                 TextButton(
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => const RegisterScreen(),
+                      ),
                     );
                   },
                   child: const Text("Don't have an account? Sign up"),
@@ -258,4 +321,4 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-} 
+}

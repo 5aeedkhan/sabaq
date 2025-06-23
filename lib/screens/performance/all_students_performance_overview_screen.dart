@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../models/student.dart';
-import '../models/performance.dart';
-import '../providers/student_provider.dart';
-import '../providers/performance_provider.dart';
+import 'package:sabaq/models/performance.dart';
+import 'package:sabaq/models/student.dart';
+import 'package:sabaq/providers/performance_provider.dart';
+import 'package:sabaq/providers/student_provider.dart';
 
 class AllStudentsPerformanceOverviewScreen extends StatefulWidget {
   const AllStudentsPerformanceOverviewScreen({super.key});
 
   @override
-  State<AllStudentsPerformanceOverviewScreen> createState() => _AllStudentsPerformanceOverviewScreenState();
+  State<AllStudentsPerformanceOverviewScreen> createState() =>
+      _AllStudentsPerformanceOverviewScreenState();
 }
 
-class _AllStudentsPerformanceOverviewScreenState extends State<AllStudentsPerformanceOverviewScreen> {
+class _AllStudentsPerformanceOverviewScreenState
+    extends State<AllStudentsPerformanceOverviewScreen> {
   List<Student> _students = [];
   List<DateTime> _recentDates = [];
   bool _isLoading = true;
@@ -45,7 +47,8 @@ class _AllStudentsPerformanceOverviewScreenState extends State<AllStudentsPerfor
       // Load students
       final studentProvider = context.read<StudentProvider>();
       // No need to await here as we listen via watch
-      studentProvider.loadStudents(); // Assuming loadStudents updates the provider state
+      studentProvider
+          .loadStudents(); // Assuming loadStudents updates the provider state
 
       if (!mounted) return;
 
@@ -53,9 +56,10 @@ class _AllStudentsPerformanceOverviewScreenState extends State<AllStudentsPerfor
       _students = studentProvider.students;
 
       // Determine recent dates (e.g., last 5 days)
-      _recentDates = List.generate(5, (index) {
-        return DateTime.now().subtract(Duration(days: index));
-      }).reversed.toList();
+      _recentDates =
+          List.generate(5, (index) {
+            return DateTime.now().subtract(Duration(days: index));
+          }).reversed.toList();
 
       // Load performance for each student for each of the recent dates
       if (_students.isNotEmpty && _recentDates.isNotEmpty) {
@@ -77,10 +81,15 @@ class _AllStudentsPerformanceOverviewScreenState extends State<AllStudentsPerfor
   }
 
   // Helper to get performance for a specific student and date - Reads directly from provider state
-  Performance? _getPerformance(BuildContext context, int studentId, DateTime date) {
+  Performance? _getPerformance(
+    BuildContext context,
+    int studentId,
+    DateTime date,
+  ) {
     final dateString = DateFormat('yyyy-MM-dd').format(date);
     // Read directly from the provider's state
-    final performancesForStudent = context.watch<PerformanceProvider>().overviewPerformances[studentId];
+    final performancesForStudent =
+        context.watch<PerformanceProvider>().overviewPerformances[studentId];
     return performancesForStudent?[dateString];
   }
 
@@ -94,7 +103,9 @@ class _AllStudentsPerformanceOverviewScreenState extends State<AllStudentsPerfor
     String? description,
   }) async {
     // Read existing performance directly from the provider state
-    Performance? existingPerformance = context.read<PerformanceProvider>().overviewPerformances[student.id!]?[DateFormat('yyyy-MM-dd').format(date)];
+    Performance? existingPerformance =
+        context.read<PerformanceProvider>().overviewPerformances[student
+            .id!]?[DateFormat('yyyy-MM-dd').format(date)];
 
     Performance newPerformance;
     if (existingPerformance != null) {
@@ -136,9 +147,7 @@ class _AllStudentsPerformanceOverviewScreenState extends State<AllStudentsPerfor
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Full Description'),
-          content: SingleChildScrollView(
-            child: Text(description),
-          ),
+          content: SingleChildScrollView(child: Text(description)),
           actions: <Widget>[
             TextButton(
               child: const Text('Close'),
@@ -162,48 +171,52 @@ class _AllStudentsPerformanceOverviewScreenState extends State<AllStudentsPerfor
       appBar: AppBar(
         title: const Text('All Students Performance Overview'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadData,
-          ),
+          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _students.isEmpty
+      body:
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _students.isEmpty
               ? const Center(child: Text('No students added yet.'))
               : SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.vertical,
-                    child: DataTable(
-                      dataRowMaxHeight: 100.0,
-                      columns: [
-                        const DataColumn(label: Text('Student Name')),
-                        for (var date in _recentDates)
-                          DataColumn(label: Text(DateFormat('d-MMM').format(date))),
-                      ],
-                      rows: [
-                        for (var student in _students)
-                          DataRow(
-                            cells: [
-                              DataCell(Text(student.name)),
-                              for (var date in _recentDates)
-                                DataCell(
-                                  // Pass context to _buildPerformanceCell to allow reading provider
-                                  _buildPerformanceCell(context, student, date),
-                                ),
-                            ],
-                          ),
-                      ],
-                    ),
+                scrollDirection: Axis.horizontal,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.vertical,
+                  child: DataTable(
+                    dataRowMaxHeight: 100.0,
+                    columns: [
+                      const DataColumn(label: Text('Student Name')),
+                      for (var date in _recentDates)
+                        DataColumn(
+                          label: Text(DateFormat('d-MMM').format(date)),
+                        ),
+                    ],
+                    rows: [
+                      for (var student in _students)
+                        DataRow(
+                          cells: [
+                            DataCell(Text(student.name)),
+                            for (var date in _recentDates)
+                              DataCell(
+                                // Pass context to _buildPerformanceCell to allow reading provider
+                                _buildPerformanceCell(context, student, date),
+                              ),
+                          ],
+                        ),
+                    ],
                   ),
                 ),
+              ),
     );
   }
 
   // Updated _buildPerformanceCell to accept BuildContext
-  Widget _buildPerformanceCell(BuildContext context, Student student, DateTime date) {
+  Widget _buildPerformanceCell(
+    BuildContext context,
+    Student student,
+    DateTime date,
+  ) {
     // Read the performance directly from the provider state via _getPerformance
     final performance = _getPerformance(context, student.id!, date);
     final bool sabaq = performance?.sabaq ?? false;
@@ -298,4 +311,4 @@ class _AllStudentsPerformanceOverviewScreenState extends State<AllStudentsPerfor
       ),
     );
   }
-} 
+}

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'student_list_screen.dart';
+import '../students/student_list_screen.dart';
 import 'login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -23,24 +23,28 @@ class _SplashScreenState extends State<SplashScreen> {
       await Future.delayed(const Duration(milliseconds: 2000)); // 2 seconds delay
       if (!mounted) return;
 
-      // Force sign out to ensure fresh authentication
-      await FirebaseAuth.instance.signOut();
-      debugPrint('User signed out for fresh authentication check');
-
-      // Get the current user after sign out
       final user = FirebaseAuth.instance.currentUser;
-      debugPrint('User after sign out: ${user?.email}');
+      debugPrint('Current user: \\${user?.email}');
 
       if (mounted) {
-        debugPrint('Navigating to login screen');
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
-          (route) => false,
-        );
+        if (user != null) {
+          debugPrint('Navigating to student list screen');
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const StudentListScreen()),
+            (route) => false,
+          );
+        } else {
+          debugPrint('Navigating to login screen');
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+            (route) => false,
+          );
+        }
       }
     } catch (e) {
-      debugPrint('Error in auth check: $e');
+      debugPrint('Error in auth check: \\${e}');
       // If there's any error, navigate to login screen
       if (mounted) {
         Navigator.pushAndRemoveUntil(
@@ -61,12 +65,10 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              'sabaq',
-              style: theme.textTheme.displayLarge?.copyWith(
-                color: theme.colorScheme.onPrimary,
-                fontWeight: FontWeight.bold,
-              ),
+            Image.asset(
+              'assets/logo.png',
+              width: 120, // Adjust size as needed
+              height: 120,
             ),
             const SizedBox(height: 20),
             CircularProgressIndicator(

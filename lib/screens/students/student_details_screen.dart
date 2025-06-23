@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
-import '../models/student.dart';
-import 'dart:io'; // Import for File
+import 'dart:io';
+
+import 'package:sabaq/models/student.dart'; // Import for File
 
 class StudentDetailsScreen extends StatelessWidget {
   final Student student;
 
-  const StudentDetailsScreen({
-    super.key,
-    required this.student,
-  });
+  const StudentDetailsScreen({super.key, required this.student});
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +21,8 @@ class StudentDetailsScreen extends StatelessWidget {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center, // Center column content
+          crossAxisAlignment:
+              CrossAxisAlignment.center, // Center column content
           children: [
             // Student Image Section
             Container(
@@ -31,21 +30,28 @@ class StudentDetailsScreen extends StatelessWidget {
               height: 120,
               decoration: BoxDecoration(
                 shape: BoxShape.circle, // Circular image
-                color: theme.colorScheme.primaryContainer, // Placeholder background
-                image: student.imagePath != null && File(student.imagePath!).existsSync()
-                    ? DecorationImage(
-                        image: FileImage(File(student.imagePath!)),
-                        fit: BoxFit.cover,
-                      )
-                    : null,
+                color:
+                    theme
+                        .colorScheme
+                        .primaryContainer, // Placeholder background
+                image:
+                    student.imagePath != null &&
+                            File(student.imagePath!).existsSync()
+                        ? DecorationImage(
+                          image: FileImage(File(student.imagePath!)),
+                          fit: BoxFit.cover,
+                        )
+                        : null,
               ),
-              child: student.imagePath != null && File(student.imagePath!).existsSync()
-                  ? null // Image is displayed by DecorationImage
-                  : Icon(
-                      Icons.person,
-                      size: 60,
-                      color: theme.colorScheme.onPrimaryContainer,
-                    ), // Placeholder icon
+              child:
+                  student.imagePath != null &&
+                          File(student.imagePath!).existsSync()
+                      ? null // Image is displayed by DecorationImage
+                      : Icon(
+                        Icons.person,
+                        size: 60,
+                        color: theme.colorScheme.onPrimaryContainer,
+                      ), // Placeholder icon
             ),
             const SizedBox(height: 16),
             // Student Name
@@ -100,7 +106,9 @@ class StudentDetailsScreen extends StatelessWidget {
     final theme = Theme.of(context);
     return Card(
       elevation: 2,
-      margin: const EdgeInsets.symmetric(horizontal: 8), // Add horizontal margin
+      margin: const EdgeInsets.symmetric(
+        horizontal: 8,
+      ), // Add horizontal margin
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12), // Rounded corners
       ),
@@ -116,7 +124,10 @@ class StudentDetailsScreen extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ), // Use theme text style
             ),
-            const Divider(height: 20, thickness: 1.5), // Add space and thickness
+            const Divider(
+              height: 20,
+              thickness: 1.5,
+            ), // Add space and thickness
             ...children,
           ],
         ),
@@ -136,18 +147,22 @@ class StudentDetailsScreen extends StatelessWidget {
               label,
               style: theme.textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w500,
-                color: theme.colorScheme.onSurface.withOpacity(0.7), // Use theme color with opacity
+                color: theme.colorScheme.onSurface.withOpacity(
+                  0.7,
+                ), // Use theme color with opacity
               ), // Use theme text style
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: theme.textTheme.bodyMedium?.copyWith(fontSize: 16), // Use theme text style
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontSize: 16,
+              ), // Use theme text style
             ),
           ),
         ],
       ),
     );
   }
-} 
+}

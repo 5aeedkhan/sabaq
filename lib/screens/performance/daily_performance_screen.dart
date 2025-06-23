@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../models/student.dart';
-import '../models/performance.dart';
-import '../providers/performance_provider.dart';
-import 'monthly_view_screen.dart';
-import 'weekly_view_screen.dart';
+import 'package:sabaq/models/performance.dart';
+import 'package:sabaq/models/student.dart';
+import 'package:sabaq/providers/performance_provider.dart';
+
+import './monthly_view_screen.dart';
+import './weekly_view_screen.dart';
 
 class DailyPerformanceScreen extends StatefulWidget {
   final Student student;
@@ -41,10 +42,9 @@ class _DailyPerformanceScreenState extends State<DailyPerformanceScreen> {
       _selectedDate,
     );
     // Update checkbox states and description based on loaded performance
-    final performances = context.read<PerformanceProvider>().getDailyPerformances(
-      widget.student.id!,
-      _selectedDate,
-    );
+    final performances = context
+        .read<PerformanceProvider>()
+        .getDailyPerformances(widget.student.id!, _selectedDate);
     if (performances.isNotEmpty) {
       final performance = performances.first;
       setState(() {
@@ -86,14 +86,15 @@ class _DailyPerformanceScreenState extends State<DailyPerformanceScreen> {
       sabaq: _sabaq,
       sabqi: _sabqi,
       manzil: _manzil,
-      description: _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
+      description:
+          _descriptionController.text.trim().isEmpty
+              ? null
+              : _descriptionController.text.trim(),
     );
     await context.read<PerformanceProvider>().addPerformance(performance);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Performance saved successfully!'),
-        ),
+        const SnackBar(content: Text('Performance saved successfully!')),
       );
     }
     await _loadPerformance(); // Reload to reflect saved changes
@@ -112,7 +113,8 @@ class _DailyPerformanceScreenState extends State<DailyPerformanceScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => WeeklyViewScreen(student: widget.student),
+                  builder:
+                      (context) => WeeklyViewScreen(student: widget.student),
                 ),
               );
             },
@@ -124,7 +126,8 @@ class _DailyPerformanceScreenState extends State<DailyPerformanceScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => MonthlyViewScreen(student: widget.student),
+                  builder:
+                      (context) => MonthlyViewScreen(student: widget.student),
                 ),
               );
             },

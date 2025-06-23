@@ -4,9 +4,10 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'providers/student_provider.dart';
 import 'providers/performance_provider.dart';
+import 'providers/auth_provider.dart';
 // import 'screens/student_list_screen.dart'; // Comment out direct import
-import 'screens/splash_screen.dart'; // Import the SplashScreen
-import 'screens/register_screen.dart';
+import 'screens/auth/splash_screen.dart'; // Import the SplashScreen
+import 'screens/auth/register_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,12 +31,15 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => StudentProvider()),
         ChangeNotifierProvider(create: (_) => PerformanceProvider()),
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
       ],
       child: MaterialApp(
+        debugShowCheckedModeBanner: false,
         title: 'Sabaq Tracker',
         theme: ThemeData(
           // Define a custom color scheme
-          colorScheme: ColorScheme.light( // Use light theme
+          colorScheme: ColorScheme.light(
+            // Use light theme
             primary: Colors.teal.shade700, // A calming primary color
             onPrimary: Colors.white,
             primaryContainer: Colors.teal.shade100,
@@ -53,7 +57,10 @@ class MyApp extends StatelessWidget {
           ),
           // Define typography
           textTheme: const TextTheme(
-            titleLarge: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold), // For AppBar titles
+            titleLarge: TextStyle(
+              fontSize: 20.0,
+              fontWeight: FontWeight.bold,
+            ), // For AppBar titles
             bodyMedium: TextStyle(fontSize: 14.0), // Default text
           ),
           // Customize AppBar theme
@@ -89,7 +96,10 @@ class MyApp extends StatelessWidget {
             ),
             filled: true,
             fillColor: Colors.teal.shade50,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 15),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 15,
+            ),
             hintStyle: TextStyle(color: Colors.teal.shade700.withOpacity(0.6)),
             labelStyle: TextStyle(color: Colors.teal.shade700),
           ),
