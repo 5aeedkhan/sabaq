@@ -5,7 +5,7 @@ import 'firebase_options.dart';
 import 'providers/student_provider.dart';
 import 'providers/performance_provider.dart';
 import 'providers/auth_provider.dart';
-// import 'screens/student_list_screen.dart'; // Comment out direct import
+import 'providers/section_provider.dart';
 import 'screens/auth/splash_screen.dart'; // Import the SplashScreen
 
 void main() async {
@@ -28,9 +28,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => StudentProvider()),
         ChangeNotifierProvider(create: (_) => PerformanceProvider()),
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => SectionProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

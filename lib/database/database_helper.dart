@@ -1,54 +1,56 @@
-import 'package:sqflite/sqflite.dart';
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
 import '../models/student.dart';
 import '../models/performance.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter/foundation.dart';
 
 class DatabaseHelper {
-  static final DatabaseHelper instance = DatabaseHelper._init();
+  static const _databaseName = "Sabaq.db";
+  static const _databaseVersion = 4;
+
+  static const tableStudents = 'students';
+  static const tablePerformances = 'performances';
+  static const tableSections = 'sections';
+
+  DatabaseHelper._privateConstructor();
+  static final DatabaseHelper instance = DatabaseHelper._privateConstructor();
+
   static Database? _database;
-
-  DatabaseHelper._init();
-
   Future<Database> get database async {
     if (_database != null) return _database!;
-    debugPrint('Initializing database...');
-    _database = await _initDB('sabaq.db');
-    debugPrint('Database initialized successfully');
+    _database = await _initDatabase();
     return _database!;
   }
 
-  Future<Database> _initDB(String filePath) async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, filePath);
-    debugPrint('Database path: $path');
-
-    return await openDatabase(
-      path,
-      version: 4,
-      onCreate: _createDB,
-      onUpgrade: _onUpgrade,
-    );
+  _initDatabase() async {
+    String path = join(await getDatabasesPath(), _databaseName);
+    return await openDatabase(path,
+        version: _databaseVersion, onCreate: _onCreate, onUpgrade: _onUpgrade);
   }
 
-  Future<void> _createDB(Database db, int version) async {
-    debugPrint('Creating database tables...');
+  Future _onCreate(Database db, int version) async {
     await db.execute('''
-      CREATE TABLE students (
+      CREATE TABLE $tableSections (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        father_name TEXT,
-        student_id TEXT,
-        phone_number TEXT,
-        age INTEGER,
-        darja TEXT,
-        image_path TEXT
+        name TEXT NOT NULL
       )
     ''');
-
     await db.execute('''
-      CREATE TABLE performances (
+      CREATE TABLE $tableStudents (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        imagePath TEXT,
+        sectionId INTEGER,
+        fatherName TEXT NOT NULL,
+        studentId TEXT NOT NULL,
+        phoneNumber TEXT NOT NULL,
+        FOREIGN KEY (sectionId) REFERENCES $tableSections (id) ON DELETE CASCADE
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE $tablePerformances (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         studentId INTEGER NOT NULL,
         date TEXT NOT NULL,
@@ -56,21 +58,76 @@ class DatabaseHelper {
         sabqi INTEGER NOT NULL,
         manzil INTEGER NOT NULL,
         description TEXT,
-        FOREIGN KEY (studentId) REFERENCES students (id)
+        FOREIGN KEY (studentId) REFERENCES $tableStudents (id) ON DELETE CASCADE
       )
     ''');
-    debugPrint('Database tables created successfully');
   }
 
-  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    debugPrint('Upgrading database from version $oldVersion to $newVersion');
+  Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
-      await db.execute('ALTER TABLE performances ADD COLUMN description TEXT;');
+      await db.execute('CREATE TABLE $tableSections (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+      
+      await db.execute('ALTER TABLE $tableStudents RENAME TO temp_students');
+
+      await db.execute('''
+        CREATE TABLE $tableStudents (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          age INTEGER NOT NULL,
+          className TEXT NOT NULL,
+          imagePath TEXT,
+          sectionId INTEGER,
+          FOREIGN KEY (sectionId) REFERENCES $tableSections (id) ON DELETE CASCADE
+        )
+      ''');
+      
+      await db.execute('INSERT INTO $tableStudents (id, name, imagePath) SELECT id, name, image_path FROM temp_students');
+      
+      await db.execute('DROP TABLE temp_students');
+      
+      await db.execute('ALTER TABLE $tablePerformances ADD FOREIGN KEY (studentId) REFERENCES $tableStudents (id) ON DELETE CASCADE');
+    }
+    if (oldVersion < 3) {
+      await db.execute('ALTER TABLE $tableStudents ADD COLUMN fatherName TEXT NOT NULL DEFAULT ""');
+      await db.execute('ALTER TABLE $tableStudents ADD COLUMN studentId TEXT NOT NULL DEFAULT ""');
+      await db.execute('ALTER TABLE $tableStudents ADD COLUMN phoneNumber TEXT NOT NULL DEFAULT ""');
+      await db.execute('ALTER TABLE $tableStudents ADD COLUMN darja TEXT NOT NULL DEFAULT ""');
     }
     if (oldVersion < 4) {
-      await db.execute('ALTER TABLE students ADD COLUMN image_path TEXT;');
+      // Logic for upgrading from version 3 to 4. Remove age, darja, className
+      await db.execute('CREATE TABLE temp_students AS SELECT id, name, fatherName, studentId, phoneNumber, imagePath, sectionId FROM $tableStudents');
+      await db.execute('DROP TABLE $tableStudents');
+      await db.execute('''
+        CREATE TABLE $tableStudents (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          fatherName TEXT NOT NULL,
+          studentId TEXT NOT NULL,
+          phoneNumber TEXT NOT NULL,
+          imagePath TEXT,
+          sectionId INTEGER,
+          FOREIGN KEY (sectionId) REFERENCES $tableSections (id) ON DELETE CASCADE
+        )
+      ''');
+      await db.execute('INSERT INTO $tableStudents (id, name, fatherName, studentId, phoneNumber, imagePath, sectionId) SELECT id, name, fatherName, studentId, phoneNumber, imagePath, sectionId FROM temp_students');
+      await db.execute('DROP TABLE temp_students');
     }
-    debugPrint('Database upgrade completed');
+  }
+
+  Future<int> insert(String table, Map<String, dynamic> row) async {
+    Database db = await instance.database;
+    return await db.insert(table, row);
+  }
+
+  Future<List<Map<String, dynamic>>> query(String table,
+      {String? where, List<Object?>? whereArgs}) async {
+    Database db = await instance.database;
+    return await db.query(table, where: where, whereArgs: whereArgs);
+  }
+
+  Future<int> delete(String table, int id) async {
+    Database db = await instance.database;
+    return await db.delete(table, where: 'id = ?', whereArgs: [id]);
   }
 
   // Student operations
@@ -78,7 +135,7 @@ class DatabaseHelper {
     try {
       final db = await database;
       debugPrint('Inserting student: ${student.name}');
-      final id = await db.insert('students', student.toMap());
+      final id = await db.insert(tableStudents, student.toMap());
       debugPrint('Student inserted with id: $id');
       return id;
     } catch (e) {
@@ -91,7 +148,7 @@ class DatabaseHelper {
     try {
       final db = await database;
       debugPrint('Fetching all students...');
-      final List<Map<String, dynamic>> maps = await db.query('students');
+      final List<Map<String, dynamic>> maps = await db.query(tableStudents);
       final students = List.generate(maps.length, (i) => Student.fromMap(maps[i]));
       debugPrint('Fetched ${students.length} students');
       return students;
@@ -104,7 +161,7 @@ class DatabaseHelper {
   Future<int> deleteStudent(int id) async {
     final db = await database;
     return await db.delete(
-      'students',
+      tableStudents,
       where: 'id = ?',
       whereArgs: [id],
     );
@@ -115,7 +172,7 @@ class DatabaseHelper {
     final db = await database;
     // Check if a record for this student and date already exists
     final existingPerformance = await db.query(
-      'performances',
+      tablePerformances,
       where: 'studentId = ? AND date = ?',
       whereArgs: [performance.studentId, performance.date.toIso8601String()],
     );
@@ -123,14 +180,14 @@ class DatabaseHelper {
     if (existingPerformance.isNotEmpty) {
       // Update the existing record
       final updatedRows = await db.update(
-        'performances',
+        tablePerformances,
         performance.toMap(),
         where: 'studentId = ? AND date = ?',
         whereArgs: [performance.studentId, performance.date.toIso8601String()],
       );
       // Fetch and return the updated performance
       final List<Map<String, dynamic>> maps = await db.query(
-        'performances',
+        tablePerformances,
         where: 'id = ?',
         whereArgs: [existingPerformance.first['id']],
       );
@@ -138,10 +195,10 @@ class DatabaseHelper {
 
     } else {
       // Insert a new record
-      final id = await db.insert('performances', performance.toMap());
+      final id = await db.insert(tablePerformances, performance.toMap());
       // Fetch and return the inserted performance
        final List<Map<String, dynamic>> maps = await db.query(
-        'performances',
+        tablePerformances,
         where: 'id = ?',
         whereArgs: [id],
       );
@@ -152,7 +209,7 @@ class DatabaseHelper {
   Future<List<Performance>> getStudentPerformances(int studentId, DateTime date) async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
-      'performances',
+      tablePerformances,
       where: 'studentId = ? AND date = ?',
       whereArgs: [studentId, date.toIso8601String()],
     );
@@ -165,7 +222,7 @@ class DatabaseHelper {
     final endDate = DateTime(month.year, month.month + 1, 0);
     
     final List<Map<String, dynamic>> maps = await db.query(
-      'performances',
+      tablePerformances,
       where: 'studentId = ? AND date BETWEEN ? AND ?',
       whereArgs: [
         studentId,
@@ -201,7 +258,7 @@ class DatabaseHelper {
     dateWhereClause = dateQueries.join(' OR ');
 
     final List<Map<String, dynamic>> maps = await db.query(
-      'performances',
+      tablePerformances,
       where: 'studentId IN ($studentIdsPlaceholder) AND ($dateWhereClause)',
       whereArgs: whereArgs,
     );
@@ -214,7 +271,7 @@ class DatabaseHelper {
     final endDate = startDate.add(const Duration(days: 6)); // Get 7 days including the start date
     
     final List<Map<String, dynamic>> maps = await db.query(
-      'performances',
+      tablePerformances,
       where: 'studentId = ? AND date BETWEEN ? AND ?',
       whereArgs: [
         studentId,
@@ -228,10 +285,15 @@ class DatabaseHelper {
   Future<void> updatePerformance(Performance performance) async {
     final db = await database;
     await db.update(
-      'performances',
+      tablePerformances,
       performance.toMap(),
       where: 'id = ?',
       whereArgs: [performance.id],
     );
+  }
+
+  Future<List<Map<String, dynamic>>> queryAllRows(String table) async {
+    Database db = await instance.database;
+    return await db.query(table);
   }
 } 

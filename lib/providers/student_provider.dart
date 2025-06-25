@@ -8,83 +8,50 @@ class StudentProvider with ChangeNotifier {
   bool _isInitialized = false;
 
   StudentProvider() {
-    debugPrint('StudentProvider constructor called');
-    _initialize();
+    debugPrint('StudentProvider created');
   }
 
-  Future<void> _initialize() async {
-    try {
-      debugPrint('Initializing StudentProvider...');
-      await loadStudents();
-      _isInitialized = true;
-      debugPrint('StudentProvider initialized with ${_students.length} students');
-      notifyListeners();
-    } catch (e) {
-      debugPrint('Error initializing StudentProvider: $e');
-    }
+  List<Student> get students => _students;
+
+  Future<void> loadAllStudents() async {
+    final data = await _dbHelper.query('students');
+    _students = data.map((item) => Student.fromMap(item)).toList();
+    notifyListeners();
   }
 
-  List<Student> get students {
-    debugPrint('Getting students list. Initialized: $_isInitialized, Count: ${_students.length}');
-    return _students;
+  Future<void> loadStudents(int sectionId) async {
+    final data = await _dbHelper.query(
+      'students',
+      where: 'sectionId = ?',
+      whereArgs: [sectionId],
+    );
+    _students = data.map((item) => Student.fromMap(item)).toList();
+    notifyListeners();
   }
 
-  Future<void> loadStudents() async {
-    try {
-      debugPrint('Loading students...');
-      final loadedStudents = await _dbHelper.getAllStudents();
-      debugPrint('Loaded ${loadedStudents.length} students from database');
-      _students = loadedStudents;
-      debugPrint('Updated _students list with ${_students.length} students');
-      notifyListeners();
-    } catch (e) {
-      debugPrint('Error loading students: $e');
-      _students = [];
-      notifyListeners();
-    }
+  void clearStudents() {
+    _students = [];
+    notifyListeners();
   }
 
-  Future<void> addStudent({
-    required String name,
-    required String fatherName,
-    required String studentId,
-    required String phoneNumber,
-    required int age,
-    required String darja,
-    String? imagePath,
-  }) async {
-    try {
-      debugPrint('Adding new student: $name');
-      final student = Student(
-        name: name,
-        fatherName: fatherName,
-        studentId: studentId,
-        phoneNumber: phoneNumber,
-        age: age,
-        darja: darja,
-        imagePath: imagePath,
-      );
-      final id = await _dbHelper.insertStudent(student);
-      debugPrint('Student added with ID: $id');
-      
-      // Reload all students after adding
-      await loadStudents();
-      debugPrint('Students reloaded after adding. Total count: ${_students.length}');
-    } catch (e) {
-      debugPrint('Error adding student: $e');
-      rethrow;
-    }
+  Future<void> addStudent(Student student) async {
+    final id = await _dbHelper.insert('students', student.toMap());
+    final newStudent = Student(
+      id: id,
+      name: student.name,
+      fatherName: student.fatherName,
+      studentId: student.studentId,
+      phoneNumber: student.phoneNumber,
+      imagePath: student.imagePath,
+      sectionId: student.sectionId,
+    );
+    _students.add(newStudent);
+    notifyListeners();
   }
 
   Future<void> deleteStudent(int id) async {
-    try {
-      debugPrint('Deleting student with ID: $id');
-      await _dbHelper.deleteStudent(id);
-      await loadStudents();
-      debugPrint('Students reloaded after deletion. Total count: ${_students.length}');
-    } catch (e) {
-      debugPrint('Error deleting student: $e');
-      rethrow;
-    }
+    await _dbHelper.delete('students', id);
+    _students.removeWhere((student) => student.id == id);
+    notifyListeners();
   }
-} 
+}

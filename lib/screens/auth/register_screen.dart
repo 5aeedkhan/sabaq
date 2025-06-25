@@ -45,10 +45,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
         // (No longer insert as Student)
 
         if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
+          // Show a loading dialog while signing out
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => const Center(child: CircularProgressIndicator()),
           );
+          await FirebaseAuth.instance.signOut(); // Sign out after registration
+          if (mounted) {
+            Navigator.of(context).pop(); // Close the loading dialog
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginScreen()),
+            );
+          }
           return; // Prevent further code execution after navigation
         }
       } on FirebaseAuthException catch (e) {

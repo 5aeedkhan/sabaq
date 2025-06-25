@@ -23,7 +23,7 @@ class StudentListViewModel with ChangeNotifier {
     notifyListeners();
 
     try {
-      await _studentProvider.loadStudents(); // Load students (assumed to populate a property)
+      await _studentProvider.loadStudents('yourArgumentHere' as int); // Load students (assumed to populate a property)
       _allStudents = _studentProvider.students; // Access the loaded students from the provider
       _filteredStudents = _allStudents; // Initially show all students
       debugPrint('ViewModel loaded ${_allStudents.length} students.');

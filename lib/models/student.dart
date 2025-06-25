@@ -4,31 +4,28 @@ class Student {
   final String fatherName;
   final String studentId;
   final String phoneNumber;
-  final int age;
-  final String darja;
   final String? imagePath;
+  final int sectionId;
 
   Student({
     this.id,
     required this.name,
-    this.fatherName = '',
-    this.studentId = '',
-    this.phoneNumber = '',
-    this.age = 0,
-    this.darja = '',
+    required this.fatherName,
+    required this.studentId,
+    required this.phoneNumber,
     this.imagePath,
+    required this.sectionId,
   });
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
       'name': name,
-      'father_name': fatherName,
-      'student_id': studentId,
-      'phone_number': phoneNumber,
-      'age': age,
-      'darja': darja,
-      'image_path': imagePath,
+      'fatherName': fatherName,
+      'studentId': studentId,
+      'phoneNumber': phoneNumber,
+      'imagePath': imagePath,
+      'sectionId': sectionId,
     };
   }
 
@@ -36,12 +33,11 @@ class Student {
     return Student(
       id: map['id'],
       name: map['name'],
-      fatherName: map['father_name'] ?? '',
-      studentId: map['student_id'] ?? '',
-      phoneNumber: map['phone_number'] ?? '',
-      age: map['age'] ?? 0,
-      darja: map['darja'] ?? '',
-      imagePath: map['image_path'],
+      fatherName: map['fatherName'] ?? '',
+      studentId: map['studentId'] ?? '',
+      phoneNumber: map['phoneNumber'] ?? '',
+      imagePath: map['imagePath'],
+      sectionId: map['sectionId'],
     );
   }
 } 

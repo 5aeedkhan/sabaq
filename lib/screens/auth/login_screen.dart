@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../students/student_list_screen.dart';
 import 'register_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:sabaq/providers/auth_provider.dart' as app_auth;
+import 'package:sabaq/screens/sections/section_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -50,12 +53,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
         debugPrint('Successfully authenticated user: ${user.email}');
 
-        if (mounted) {
-          // Navigate to student list screen
-          Navigator.pushAndRemoveUntil(
+        final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
+        await authProvider.login(_emailController.text.trim(), _passwordController.text);
+        if (mounted && authProvider.isAuthenticated) {
+          Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const StudentListScreen()),
-            (route) => false,
+            MaterialPageRoute(builder: (context) => const SectionScreen()),
           );
         }
       } on FirebaseAuthException catch (e) {
@@ -97,13 +100,16 @@ class _LoginScreenState extends State<LoginScreen> {
             if (user != null) {
               debugPrint('Found authenticated user: ${user.email}');
               if (mounted) {
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const StudentListScreen(),
-                  ),
-                  (route) => false,
-                );
+                final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
+                await authProvider.login(_emailController.text.trim(), _passwordController.text);
+                if (authProvider.isAuthenticated) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SectionScreen(),
+                    ),
+                  );
+                }
                 return;
               }
             }
@@ -123,6 +129,23 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       }
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    FirebaseAuth.instance.authStateChanges().listen((User? user) {
+      if (user != null) {
+        final authProvider =
+            Provider.of<app_auth.AuthProvider>(context, listen: false);
+        if (authProvider.isAuthenticated) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const SectionScreen()),
+          );
+        }
+      }
+    });
   }
 
   @override
@@ -289,29 +312,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _login,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.all(16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+                if (_isLoading)
+                  const Center(child: CircularProgressIndicator())
+                else
+                  ElevatedButton(
+                    onPressed: _login,
+                    child: const Text('Login'),
                   ),
-                  child:
-                      _isLoading
-                          ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
-                              ),
-                            ),
-                          )
-                          : const Text('Login', style: TextStyle(fontSize: 16)),
-                ),
-                const SizedBox(height: 16),
                 TextButton(
                   onPressed: () {
                     Navigator.push(

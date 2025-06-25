@@ -10,6 +10,8 @@ class AuthProvider with ChangeNotifier {
   String? get errorMessage => _errorMessage;
   bool get isLoading => _isLoading;
 
+  bool get isAuthenticated => _user != null;
+
   AuthProvider() {
     _user = FirebaseAuth.instance.currentUser;
     FirebaseAuth.instance.authStateChanges().listen((user) {

@@ -7,7 +7,9 @@ import 'package:sabaq/providers/performance_provider.dart';
 import 'package:sabaq/providers/student_provider.dart';
 
 class AllStudentsPerformanceOverviewScreen extends StatefulWidget {
-  const AllStudentsPerformanceOverviewScreen({super.key});
+  final int sectionId;
+  const AllStudentsPerformanceOverviewScreen(
+      {super.key, required this.sectionId});
 
   @override
   State<AllStudentsPerformanceOverviewScreen> createState() =>
@@ -44,11 +46,9 @@ class _AllStudentsPerformanceOverviewScreenState
     });
 
     try {
-      // Load students
+      // Load students for the specific section
       final studentProvider = context.read<StudentProvider>();
-      // No need to await here as we listen via watch
-      studentProvider
-          .loadStudents(); // Assuming loadStudents updates the provider state
+      await studentProvider.loadStudents(widget.sectionId);
 
       if (!mounted) return;
 

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../students/student_list_screen.dart';
 import 'login_screen.dart';
+import 'package:sabaq/screens/sections/section_screen.dart';
+import 'package:sabaq/providers/auth_provider.dart' as app_auth;
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -14,46 +17,21 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _checkAuthAndNavigate();
-  }
-
-  Future<void> _checkAuthAndNavigate() async {
-    try {
-      debugPrint('Starting authentication check');
-      await Future.delayed(const Duration(milliseconds: 2000)); // 2 seconds delay
-      if (!mounted) return;
-
-      final user = FirebaseAuth.instance.currentUser;
-      debugPrint('Current user: \\${user?.email}');
-
-      if (mounted) {
-        if (user != null) {
-          debugPrint('Navigating to student list screen');
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => const StudentListScreen()),
-            (route) => false,
-          );
-        } else {
-          debugPrint('Navigating to login screen');
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
-            (route) => false,
-          );
-        }
-      }
-    } catch (e) {
-      debugPrint('Error in auth check: \\${e}');
-      // If there's any error, navigate to login screen
-      if (mounted) {
-        Navigator.pushAndRemoveUntil(
+    Future.delayed(const Duration(seconds: 3), () {
+      final authProvider =
+          Provider.of<app_auth.AuthProvider>(context, listen: false);
+      if (authProvider.isAuthenticated) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const SectionScreen()),
+        );
+      } else {
+        Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const LoginScreen()),
-          (route) => false,
         );
       }
-    }
+    });
   }
 
   @override
