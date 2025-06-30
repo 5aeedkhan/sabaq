@@ -5,6 +5,7 @@ import 'package:sabaq/providers/section_provider.dart';
 import 'package:sabaq/screens/students/student_list_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:sabaq/screens/auth/login_screen.dart';
+import 'package:marquee/marquee.dart';
 
 class SectionScreen extends StatefulWidget {
   const SectionScreen({super.key});
@@ -92,7 +93,7 @@ class _SectionScreenState extends State<SectionScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Sections'),
+          title: _buildAppBarTitle('Sections'),
           actions: [
             IconButton(
               icon: const Icon(Icons.add),
@@ -256,6 +257,41 @@ class _SectionScreenState extends State<SectionScreen> {
           );
         }
       }
+    }
+  }
+
+  Widget _buildAppBarTitle(String title) {
+    if (title.length > 15) {
+      return SizedBox(
+        height: 24,
+        child: Marquee(
+          text: title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+          scrollAxis: Axis.horizontal,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          blankSpace: 40.0,
+          velocity: 30.0,
+          pauseAfterRound: Duration(seconds: 1),
+          startPadding: 10.0,
+          accelerationDuration: Duration(seconds: 1),
+          accelerationCurve: Curves.linear,
+          decelerationDuration: Duration(milliseconds: 500),
+          decelerationCurve: Curves.easeOut,
+        ),
+      );
+    } else {
+      return const Text(
+        'Sections',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
+      );
     }
   }
 } 

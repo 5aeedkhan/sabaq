@@ -5,6 +5,9 @@ import 'package:sabaq/models/performance.dart';
 import 'package:sabaq/models/student.dart';
 import 'package:sabaq/providers/performance_provider.dart';
 import 'package:sabaq/providers/student_provider.dart';
+import 'package:marquee/marquee.dart';
+
+enum PerformanceViewType { recent, single }
 
 class AllStudentsPerformanceOverviewScreen extends StatefulWidget {
   final int sectionId;
@@ -19,8 +22,10 @@ class AllStudentsPerformanceOverviewScreen extends StatefulWidget {
 class _AllStudentsPerformanceOverviewScreenState
     extends State<AllStudentsPerformanceOverviewScreen> {
   List<Student> _students = [];
-  List<DateTime> _recentDates = [];
+  List<DateTime> _datesToDisplay = [];
   bool _isLoading = true;
+  PerformanceViewType _viewType = PerformanceViewType.recent;
+  DateTime _selectedDate = DateTime.now();
 
   @override
   void initState() {
@@ -36,6 +41,21 @@ class _AllStudentsPerformanceOverviewScreenState
     // if (_students.isEmpty) {
     //   _loadData();
     // }
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+      });
+      await _loadData();
+    }
   }
 
   Future<void> _loadData() async {
@@ -55,17 +75,19 @@ class _AllStudentsPerformanceOverviewScreenState
       // Access students from the provider after loading
       _students = studentProvider.students;
 
-      // Determine recent dates (e.g., last 5 days)
-      _recentDates =
-          List.generate(5, (index) {
-            return DateTime.now().subtract(Duration(days: index));
-          }).reversed.toList();
+      if (_viewType == PerformanceViewType.recent) {
+        _datesToDisplay = List.generate(5, (index) {
+          return DateTime.now().subtract(Duration(days: index));
+        }).reversed.toList();
+      } else {
+        _datesToDisplay = [_selectedDate];
+      }
 
       // Load performance for each student for each of the recent dates
-      if (_students.isNotEmpty && _recentDates.isNotEmpty) {
+      if (_students.isNotEmpty && _datesToDisplay.isNotEmpty) {
         await context.read<PerformanceProvider>().loadOverviewPerformances(
           _students.map((s) => s.id!).toList(),
-          _recentDates,
+          _datesToDisplay,
         );
         // The screen will get updated performances via context.watch
       }
@@ -100,7 +122,9 @@ class _AllStudentsPerformanceOverviewScreenState
     bool? sabaq,
     bool? sabqi,
     bool? manzil,
-    String? description,
+    String? sabaqDescription,
+    String? sabqiDescription,
+    String? manzilDescription,
   }) async {
     // Read existing performance directly from the provider state
     Performance? existingPerformance =
@@ -117,17 +141,21 @@ class _AllStudentsPerformanceOverviewScreenState
         sabaq: sabaq ?? existingPerformance.sabaq,
         sabqi: sabqi ?? existingPerformance.sabqi,
         manzil: manzil ?? existingPerformance.manzil,
-        description: description ?? existingPerformance.description,
+        sabaqDescription: sabaqDescription ?? existingPerformance.sabaqDescription,
+        sabqiDescription: sabqiDescription ?? existingPerformance.sabqiDescription,
+        manzilDescription: manzilDescription ?? existingPerformance.manzilDescription,
       );
     } else {
-      // Create new performance
+      // Create new performance - DO NOT provide an ID.
       newPerformance = Performance(
         studentId: student.id!,
         date: date,
         sabaq: sabaq ?? false,
         sabqi: sabqi ?? false,
         manzil: manzil ?? false,
-        description: description,
+        sabaqDescription: sabaqDescription,
+        sabqiDescription: sabqiDescription,
+        manzilDescription: manzilDescription,
       );
     }
 
@@ -141,17 +169,93 @@ class _AllStudentsPerformanceOverviewScreenState
   }
 
   // Function to show full description in a dialog
-  void _showFullDescription(BuildContext context, String description) {
+  void _showFullDescription(BuildContext context, String generalDescription, String sabaqDescription, String sabqiDescription, String manzilDescription) {
+    final List<String> notes = [];
+    if (generalDescription.isNotEmpty) {
+      notes.add('General: $generalDescription');
+    }
+    if (sabaqDescription.isNotEmpty) {
+      notes.add('Sabaq: $sabaqDescription');
+    }
+    if (sabqiDescription.isNotEmpty) {
+      notes.add('Sabqi: $sabqiDescription');
+    }
+    if (manzilDescription.isNotEmpty) {
+      notes.add('Manzil: $manzilDescription');
+    }
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Full Description'),
-          content: SingleChildScrollView(child: Text(description)),
+          content: SingleChildScrollView(child: Text(notes.join('\n\n'))),
           actions: <Widget>[
             TextButton(
               child: const Text('Close'),
               onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showEditDescriptionDialog(
+    BuildContext context,
+    Student student,
+    DateTime date,
+    String performanceType, // 'S', 'Sb', or 'M'
+    String initialDescription,
+  ) {
+    final TextEditingController controller =
+        TextEditingController(text: initialDescription);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Edit Description for $performanceType'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            maxLines: null,
+            decoration: const InputDecoration(
+              labelText: 'Description',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Save'),
+              onPressed: () {
+                final newDescription = controller.text.trim();
+                if (performanceType == 'S') {
+                  _updatePerformance(
+                    student: student,
+                    date: date,
+                    sabaqDescription: newDescription,
+                  );
+                } else if (performanceType == 'Sb') {
+                  _updatePerformance(
+                    student: student,
+                    date: date,
+                    sabqiDescription: newDescription,
+                  );
+                } else if (performanceType == 'M') {
+                  _updatePerformance(
+                    student: student,
+                    date: date,
+                    manzilDescription: newDescription,
+                  );
+                }
                 Navigator.of(context).pop();
               },
             ),
@@ -169,146 +273,223 @@ class _AllStudentsPerformanceOverviewScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('All Students Performance Overview'),
+        title: SizedBox(
+          height: 24,
+          child: Marquee(
+            text: 'Students Performance Overview',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+            scrollAxis: Axis.horizontal,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            blankSpace: 40.0,
+            velocity: 30.0,
+            pauseAfterRound: const Duration(seconds: 1),
+            startPadding: 10.0,
+            accelerationDuration: const Duration(seconds: 1),
+            accelerationCurve: Curves.linear,
+            decelerationDuration: const Duration(milliseconds: 500),
+            decelerationCurve: Curves.easeOut,
+          ),
+        ),
         actions: [
+          if (_viewType == PerformanceViewType.single)
+            IconButton(
+              icon: const Icon(Icons.calendar_today),
+              onPressed: () => _selectDate(context),
+            ),
           IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: ToggleButtons(
+              isSelected: [
+                _viewType == PerformanceViewType.recent,
+                _viewType == PerformanceViewType.single,
+              ],
+              onPressed: (index) {
+                setState(() {
+                  _viewType = index == 0
+                      ? PerformanceViewType.recent
+                      : PerformanceViewType.single;
+                  _loadData();
+                });
+              },
+              borderRadius: BorderRadius.circular(8),
+              selectedColor: Colors.white,
+              color: Colors.white,
+              fillColor: Colors.blue.shade700,
+              splashColor: Colors.blue.shade900,
+              highlightColor: Colors.blue.shade800,
+              constraints: const BoxConstraints(minHeight: 36.0),
+              children: const [
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12.0),
+                  child: Text('Recent'),
+                ),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12.0),
+                  child: Text('By Day'),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _students.isEmpty
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _students.isEmpty
               ? const Center(child: Text('No students added yet.'))
               : SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.vertical,
-                  child: DataTable(
-                    dataRowMaxHeight: 100.0,
-                    columns: [
-                      const DataColumn(label: Text('Student Name')),
-                      for (var date in _recentDates)
-                        DataColumn(
-                          label: Text(DateFormat('d-MMM').format(date)),
-                        ),
-                    ],
-                    rows: [
-                      for (var student in _students)
-                        DataRow(
-                          cells: [
-                            DataCell(Text(student.name)),
-                            for (var date in _recentDates)
-                              DataCell(
-                                // Pass context to _buildPerformanceCell to allow reading provider
-                                _buildPerformanceCell(context, student, date),
-                              ),
-                          ],
-                        ),
-                    ],
+                  scrollDirection: Axis.horizontal,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.vertical,
+                    child: DataTable(
+                      dataRowMaxHeight: 100.0,
+                      columns: [
+                        const DataColumn(label: Text('Student Name')),
+                        for (var date in _datesToDisplay)
+                          DataColumn(
+                            label: Text(DateFormat('d-MMM').format(date)),
+                          ),
+                      ],
+                      rows: [
+                        for (var student in _students)
+                          DataRow(
+                            cells: [
+                              DataCell(Text(student.name)),
+                              for (var date in _datesToDisplay)
+                                DataCell(
+                                  // Pass context to _buildPerformanceCell to allow reading provider
+                                  _buildPerformanceCell(context, student, date),
+                                ),
+                            ],
+                          ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
     );
   }
 
-  // Updated _buildPerformanceCell to accept BuildContext
   Widget _buildPerformanceCell(
     BuildContext context,
     Student student,
     DateTime date,
   ) {
-    // Read the performance directly from the provider state via _getPerformance
     final performance = _getPerformance(context, student.id!, date);
     final bool sabaq = performance?.sabaq ?? false;
     final bool sabqi = performance?.sabqi ?? false;
     final bool manzil = performance?.manzil ?? false;
     final String description = performance?.description ?? '';
-
-    // Define maximum length for displayed description
-    // const int maxDescriptionLength = 50; // Adjust as needed
-    // final String displayedDescription = description.length > maxDescriptionLength
-    //     ? '${description.substring(0, maxDescriptionLength)}...'
-    //     : description;
+    final String sabaqDescription = performance?.sabaqDescription ?? '';
+    final String sabqiDescription = performance?.sabqiDescription ?? '';
+    final String manzilDescription = performance?.manzilDescription ?? '';
 
     return Container(
       padding: const EdgeInsets.all(4.0),
-      child: Column(
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              // Sabaq checkbox
-              Column(
-                children: [
-                  const Text('S', style: TextStyle(fontSize: 12)),
-                  Checkbox(
-                    value: sabaq,
-                    onChanged: (bool? value) async {
-                      await _updatePerformance(
-                        student: student,
-                        date: date,
-                        sabaq: value ?? false,
-                      );
-                    },
-                  ),
-                ],
-              ),
-              // Sabqi checkbox
-              Column(
-                children: [
-                  const Text('Sb', style: TextStyle(fontSize: 12)),
-                  Checkbox(
-                    value: sabqi,
-                    onChanged: (bool? value) async {
-                      await _updatePerformance(
-                        student: student,
-                        date: date,
-                        sabqi: value ?? false,
-                      );
-                    },
-                  ),
-                ],
-              ),
-              // Manzil checkbox
-              Column(
-                children: [
-                  const Text('M', style: TextStyle(fontSize: 12)),
-                  Checkbox(
-                    value: manzil,
-                    onChanged: (bool? value) async {
-                      await _updatePerformance(
-                        student: student,
-                        date: date,
-                        manzil: value ?? false,
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ],
+          _buildPerformanceItem(
+            context,
+            student,
+            date,
+            'S',
+            sabaq,
+            sabaqDescription.isNotEmpty ? sabaqDescription : description,
           ),
-          if (description.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            // Truncated Description with Tap to show full description
+          const SizedBox(width: 8),
+          _buildPerformanceItem(
+            context,
+            student,
+            date,
+            'Sb',
+            sabqi,
+            sabqiDescription.isNotEmpty ? sabqiDescription : description,
+          ),
+          const SizedBox(width: 8),
+          _buildPerformanceItem(
+            context,
+            student,
+            date,
+            'M',
+            manzil,
+            manzilDescription.isNotEmpty ? manzilDescription : description,
+          ),
+          if (description.isNotEmpty ||
+              sabaqDescription.isNotEmpty ||
+              sabqiDescription.isNotEmpty ||
+              manzilDescription.isNotEmpty) ...[
+            const SizedBox(width: 12),
             GestureDetector(
               onTap: () {
-                _showFullDescription(context, description);
+                _showFullDescription(context, description, sabaqDescription,
+                    sabqiDescription, manzilDescription);
               },
-              child: const Text(
-                'Description', // Show the literal word "Description"
+              child: Text(
+                'View\nNotes',
+                textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.blue, // Indicate it's tappable
+                  fontSize: 11,
+                  color: Colors.blue.shade700,
                   decoration: TextDecoration.underline,
+                  decorationColor: Colors.blue.shade700,
                 ),
-                // maxLines and overflow are not needed if showing a single word
               ),
             ),
-          ],
+          ]
         ],
       ),
+    );
+  }
+
+  Widget _buildPerformanceItem(
+    BuildContext context,
+    Student student,
+    DateTime date,
+    String label,
+    bool value,
+    String description,
+  ) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 12)),
+        Checkbox(
+          visualDensity: VisualDensity.compact,
+          value: value,
+          onChanged: (bool? newValue) async {
+            if (label == 'S') {
+              await _updatePerformance(
+                  student: student, date: date, sabaq: newValue);
+            } else if (label == 'Sb') {
+              await _updatePerformance(
+                  student: student, date: date, sabqi: newValue);
+            } else if (label == 'M') {
+              await _updatePerformance(
+                  student: student, date: date, manzil: newValue);
+            }
+          },
+        ),
+        GestureDetector(
+          onTap: () {
+            _showEditDescriptionDialog(
+                context, student, date, label, description);
+          },
+          child: Text(
+            'Edit',
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.blue.shade700,
+              decoration: TextDecoration.underline,
+              decorationColor: Colors.blue.shade700,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

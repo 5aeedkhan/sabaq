@@ -6,7 +6,7 @@ import 'providers/student_provider.dart';
 import 'providers/performance_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/section_provider.dart';
-import 'screens/auth/splash_screen.dart'; // Import the SplashScreen
+import 'screens/auth/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

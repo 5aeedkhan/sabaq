@@ -6,6 +6,9 @@ class Performance {
   final bool sabqi;
   final bool manzil;
   final String? description;
+  final String? sabaqDescription;
+  final String? sabqiDescription;
+  final String? manzilDescription;
 
   Performance({
     this.id,
@@ -14,7 +17,10 @@ class Performance {
     required this.sabaq,
     required this.sabqi,
     required this.manzil,
-    this.description, String? imagePath,
+    this.description,
+    this.sabaqDescription,
+    this.sabqiDescription,
+    this.manzilDescription,
   });
 
   Map<String, dynamic> toMap() {
@@ -26,6 +32,9 @@ class Performance {
       'sabqi': sabqi ? 1 : 0,
       'manzil': manzil ? 1 : 0,
       'description': description,
+      'sabaqDescription': sabaqDescription,
+      'sabqiDescription': sabqiDescription,
+      'manzilDescription': manzilDescription,
     };
   }
 
@@ -38,6 +47,9 @@ class Performance {
       sabqi: map['sabqi'] == 1,
       manzil: map['manzil'] == 1,
       description: map['description'],
+      sabaqDescription: map['sabaqDescription'],
+      sabqiDescription: map['sabqiDescription'],
+      manzilDescription: map['manzilDescription'],
     );
   }
 } 

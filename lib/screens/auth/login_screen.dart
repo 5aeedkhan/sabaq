@@ -5,6 +5,7 @@ import 'register_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:sabaq/providers/auth_provider.dart' as app_auth;
 import 'package:sabaq/screens/sections/section_screen.dart';
+import 'package:marquee/marquee.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -183,7 +184,9 @@ class _LoginScreenState extends State<LoginScreen> {
         return shouldPop ?? false;
       },
       child: Scaffold(
-        appBar: AppBar(title: const Text('Login')),
+        appBar: AppBar(
+          title: _buildAppBarTitle('Login'),
+        ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
           child: Form(
@@ -336,5 +339,40 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildAppBarTitle(String title) {
+    if (title.length > 15) {
+      return SizedBox(
+        height: 24,
+        child: Marquee(
+          text: title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+          scrollAxis: Axis.horizontal,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          blankSpace: 40.0,
+          velocity: 30.0,
+          pauseAfterRound: Duration(seconds: 1),
+          startPadding: 10.0,
+          accelerationDuration: Duration(seconds: 1),
+          accelerationCurve: Curves.linear,
+          decelerationDuration: Duration(milliseconds: 500),
+          decelerationCurve: Curves.easeOut,
+        ),
+      );
+    } else {
+      return const Text(
+        'Login',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
+      );
+    }
   }
 }

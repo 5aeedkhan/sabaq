@@ -29,9 +29,11 @@ class StudentProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void clearStudents() {
+  void clearStudents({bool notify = true}) {
     _students = [];
-    notifyListeners();
+    if (notify) {
+      notifyListeners();
+    }
   }
 
   Future<void> addStudent(Student student) async {
@@ -47,6 +49,15 @@ class StudentProvider with ChangeNotifier {
     );
     _students.add(newStudent);
     notifyListeners();
+  }
+
+  Future<void> updateStudent(Student student) async {
+    await _dbHelper.update('students', student.toMap(), student.id!);
+    final index = _students.indexWhere((s) => s.id == student.id);
+    if (index != -1) {
+      _students[index] = student;
+      notifyListeners();
+    }
   }
 
   Future<void> deleteStudent(int id) async {

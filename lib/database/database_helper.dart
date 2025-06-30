@@ -8,7 +8,7 @@ import 'package:intl/intl.dart';
 
 class DatabaseHelper {
   static const _databaseName = "Sabaq.db";
-  static const _databaseVersion = 4;
+  static const _databaseVersion = 7;
 
   static const tableStudents = 'students';
   static const tablePerformances = 'performances';
@@ -44,8 +44,8 @@ class DatabaseHelper {
         imagePath TEXT,
         sectionId INTEGER,
         fatherName TEXT NOT NULL,
-        studentId TEXT NOT NULL,
-        phoneNumber TEXT NOT NULL,
+        studentId TEXT,
+        phoneNumber TEXT,
         FOREIGN KEY (sectionId) REFERENCES $tableSections (id) ON DELETE CASCADE
       )
     ''');
@@ -58,6 +58,9 @@ class DatabaseHelper {
         sabqi INTEGER NOT NULL,
         manzil INTEGER NOT NULL,
         description TEXT,
+        sabaqDescription TEXT,
+        sabqiDescription TEXT,
+        manzilDescription TEXT,
         FOREIGN KEY (studentId) REFERENCES $tableStudents (id) ON DELETE CASCADE
       )
     ''');
@@ -112,6 +115,39 @@ class DatabaseHelper {
       await db.execute('INSERT INTO $tableStudents (id, name, fatherName, studentId, phoneNumber, imagePath, sectionId) SELECT id, name, fatherName, studentId, phoneNumber, imagePath, sectionId FROM temp_students');
       await db.execute('DROP TABLE temp_students');
     }
+    if (oldVersion < 5) {
+      await db.execute('ALTER TABLE $tablePerformances ADD COLUMN sabaqDescription TEXT');
+      await db.execute('ALTER TABLE $tablePerformances ADD COLUMN sabqiDescription TEXT');
+      await db.execute('ALTER TABLE $tablePerformances ADD COLUMN manzilDescription TEXT');
+    }
+    if (oldVersion < 6) {
+      // Check if the column already exists before trying to add it
+      var tableInfo = await db.rawQuery('PRAGMA table_info($tablePerformances)');
+      var columnExists = tableInfo.any((col) => col['name'] == 'description');
+      if (!columnExists) {
+        await db.execute('ALTER TABLE $tablePerformances ADD COLUMN description TEXT');
+      }
+    }
+    if (oldVersion < 7) {
+      // Recreate table to make columns nullable
+      await db.execute('CREATE TABLE temp_students AS SELECT * FROM $tableStudents');
+      await db.execute('DROP TABLE $tableStudents');
+      await db.execute('''
+        CREATE TABLE $tableStudents (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          fatherName TEXT NOT NULL,
+          studentId TEXT,
+          phoneNumber TEXT,
+          imagePath TEXT,
+          sectionId INTEGER,
+          FOREIGN KEY (sectionId) REFERENCES $tableSections (id) ON DELETE CASCADE
+        )
+      ''');
+      // Copy data back, handling potential missing columns from older versions
+      await db.execute('INSERT INTO $tableStudents (id, name, fatherName, studentId, phoneNumber, imagePath, sectionId) SELECT id, name, fatherName, studentId, phoneNumber, imagePath, sectionId FROM temp_students');
+      await db.execute('DROP TABLE temp_students');
+    }
   }
 
   Future<int> insert(String table, Map<String, dynamic> row) async {
@@ -123,6 +159,11 @@ class DatabaseHelper {
       {String? where, List<Object?>? whereArgs}) async {
     Database db = await instance.database;
     return await db.query(table, where: where, whereArgs: whereArgs);
+  }
+
+  Future<int> update(String table, Map<String, dynamic> row, int id) async {
+    Database db = await instance.database;
+    return await db.update(table, row, where: 'id = ?', whereArgs: [id]);
   }
 
   Future<int> delete(String table, int id) async {
@@ -170,34 +211,41 @@ class DatabaseHelper {
   // Performance operations
   Future<Performance> insertPerformance(Performance performance) async {
     final db = await database;
+    final dayStart = DateTime(
+        performance.date.year, performance.date.month, performance.date.day);
+    final dayEnd = dayStart.add(const Duration(days: 1));
     // Check if a record for this student and date already exists
-    final existingPerformance = await db.query(
+    final List<Map<String, dynamic>> existingPerformances = await db.query(
       tablePerformances,
-      where: 'studentId = ? AND date = ?',
-      whereArgs: [performance.studentId, performance.date.toIso8601String()],
+      where: 'studentId = ? AND date >= ? AND date < ?',
+      whereArgs: [
+        performance.studentId,
+        dayStart.toIso8601String(),
+        dayEnd.toIso8601String()
+      ],
     );
 
-    if (existingPerformance.isNotEmpty) {
+    if (existingPerformances.isNotEmpty) {
       // Update the existing record
-      final updatedRows = await db.update(
+      final existingId = existingPerformances.first['id'];
+      await db.update(
         tablePerformances,
-        performance.toMap(),
-        where: 'studentId = ? AND date = ?',
-        whereArgs: [performance.studentId, performance.date.toIso8601String()],
+        performance.toMap()..remove('id'), // Don't try to update the ID
+        where: 'id = ?',
+        whereArgs: [existingId],
       );
-      // Fetch and return the updated performance
       final List<Map<String, dynamic>> maps = await db.query(
         tablePerformances,
         where: 'id = ?',
-        whereArgs: [existingPerformance.first['id']],
+        whereArgs: [existingId],
       );
       return Performance.fromMap(maps.first);
-
     } else {
       // Insert a new record
-      final id = await db.insert(tablePerformances, performance.toMap());
+      final id = await db.insert(
+          tablePerformances, performance.toMap()..remove('id'));
       // Fetch and return the inserted performance
-       final List<Map<String, dynamic>> maps = await db.query(
+      final List<Map<String, dynamic>> maps = await db.query(
         tablePerformances,
         where: 'id = ?',
         whereArgs: [id],
@@ -206,24 +254,32 @@ class DatabaseHelper {
     }
   }
 
-  Future<List<Performance>> getStudentPerformances(int studentId, DateTime date) async {
+  Future<List<Performance>> getStudentPerformances(
+      int studentId, DateTime date) async {
     final db = await database;
+    final startOfDay = DateTime(date.year, date.month, date.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
     final List<Map<String, dynamic>> maps = await db.query(
       tablePerformances,
-      where: 'studentId = ? AND date = ?',
-      whereArgs: [studentId, date.toIso8601String()],
+      where: 'studentId = ? AND date >= ? AND date < ?',
+      whereArgs: [
+        studentId,
+        startOfDay.toIso8601String(),
+        endOfDay.toIso8601String()
+      ],
     );
     return List.generate(maps.length, (i) => Performance.fromMap(maps[i]));
   }
 
-  Future<List<Performance>> getMonthlyPerformances(int studentId, DateTime month) async {
+  Future<List<Performance>> getMonthlyPerformances(
+      int studentId, DateTime month) async {
     final db = await database;
     final startDate = DateTime(month.year, month.month, 1);
-    final endDate = DateTime(month.year, month.month + 1, 0);
-    
+    final endDate = DateTime(month.year, month.month + 1, 1);
+
     final List<Map<String, dynamic>> maps = await db.query(
       tablePerformances,
-      where: 'studentId = ? AND date BETWEEN ? AND ?',
+      where: 'studentId = ? AND date >= ? AND date < ?',
       whereArgs: [
         studentId,
         startDate.toIso8601String(),
@@ -266,17 +322,20 @@ class DatabaseHelper {
     return List.generate(maps.length, (i) => Performance.fromMap(maps[i]));
   }
 
-  Future<List<Performance>> getWeeklyPerformances(int studentId, DateTime startDate) async {
+  Future<List<Performance>> getWeeklyPerformances(
+      int studentId, DateTime startDate) async {
     final db = await database;
-    final endDate = startDate.add(const Duration(days: 6)); // Get 7 days including the start date
-    
+    final startOfDay = DateTime(startDate.year, startDate.month, startDate.day);
+    final endDate =
+        startOfDay.add(const Duration(days: 7)); // Exclusive end date
+
     final List<Map<String, dynamic>> maps = await db.query(
       tablePerformances,
-      where: 'studentId = ? AND date BETWEEN ? AND ?',
+      where: 'studentId = ? AND date >= ? AND date < ?',
       whereArgs: [
         studentId,
-        DateFormat('yyyy-MM-dd').format(startDate),
-        DateFormat('yyyy-MM-dd').format(endDate),
+        startOfDay.toIso8601String(),
+        endDate.toIso8601String(),
       ],
     );
     return List.generate(maps.length, (i) => Performance.fromMap(maps[i]));
@@ -295,5 +354,10 @@ class DatabaseHelper {
   Future<List<Map<String, dynamic>>> queryAllRows(String table) async {
     Database db = await instance.database;
     return await db.query(table);
+  }
+
+  static Future<String> getDatabaseFilePath() async {
+    String path = join(await getDatabasesPath(), _databaseName);
+    return path;
   }
 } 

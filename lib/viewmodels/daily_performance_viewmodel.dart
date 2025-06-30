@@ -14,7 +14,7 @@ class DailyPerformanceViewModel with ChangeNotifier {
   bool _sabqi = false;
   bool _manzil = false;
   String _description = '';
-  File? _selectedImage; // Assuming we handle image path here
+  // File? _selectedImage; // Removed, not used
 
   // State for UI feedback
   bool _isLoading = false;
@@ -27,7 +27,7 @@ class DailyPerformanceViewModel with ChangeNotifier {
   bool get sabqi => _sabqi;
   bool get manzil => _manzil;
   String get description => _description;
-  File? get selectedImage => _selectedImage;
+  // File? get selectedImage => _selectedImage; // Removed
 
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -58,10 +58,10 @@ class DailyPerformanceViewModel with ChangeNotifier {
     notifyListeners();
   }
 
-   void updateSelectedImage(File? imageFile) {
-    _selectedImage = imageFile;
-    notifyListeners();
-  }
+  // void updateSelectedImage(File? imageFile) {
+  //   _selectedImage = imageFile;
+  //   notifyListeners();
+  // }
 
   Future<void> selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -97,7 +97,7 @@ class DailyPerformanceViewModel with ChangeNotifier {
         _sabqi = performance.sabqi;
         _manzil = performance.manzil;
         _description = performance.description ?? '';
-        _selectedImage = performance.imagePath != null ? File(performance.imagePath!) : null;
+        // _selectedImage = performance.imagePath != null ? File(performance.imagePath!) : null;
         debugPrint('ViewModel loaded performance data.');
       } else {
         // Clear state if no performance found
@@ -105,7 +105,7 @@ class DailyPerformanceViewModel with ChangeNotifier {
         _sabqi = false;
         _manzil = false;
         _description = '';
-        _selectedImage = null;
+        // _selectedImage = null;
         debugPrint('ViewModel no performance data found.');
       }
       */
@@ -114,7 +114,7 @@ class DailyPerformanceViewModel with ChangeNotifier {
        _sabqi = false;
        _manzil = false;
        _description = '';
-       _selectedImage = null;
+       // _selectedImage = null;
        debugPrint('ViewModel performance state cleared (loading not implemented).');
 
     } catch (e) {
@@ -147,7 +147,7 @@ class DailyPerformanceViewModel with ChangeNotifier {
         sabqi: _sabqi,
         manzil: _manzil,
         description: _description.trim().isEmpty ? null : _description.trim(),
-        imagePath: _selectedImage?.path,
+        // imagePath: _selectedImage?.path, // Removed
       );
 
       // TODO: Replace with actual service call to save performance

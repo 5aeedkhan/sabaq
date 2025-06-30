@@ -13,6 +13,7 @@ import 'package:printing/printing.dart';
 
 import './monthly_view_screen.dart';
 import './weekly_view_screen.dart';
+import 'package:marquee/marquee.dart';
 
 class DailyPerformanceScreen extends StatefulWidget {
   final Student student;
@@ -33,7 +34,8 @@ class _DailyPerformanceScreenState extends State<DailyPerformanceScreen> {
   @override
   void initState() {
     super.initState();
-    _loadPerformance();
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _loadPerformance());
   }
 
   @override
@@ -92,10 +94,9 @@ class _DailyPerformanceScreenState extends State<DailyPerformanceScreen> {
       sabaq: _sabaq,
       sabqi: _sabqi,
       manzil: _manzil,
-      description:
-          _descriptionController.text.trim().isEmpty
-              ? null
-              : _descriptionController.text.trim(),
+      description: _descriptionController.text.trim().isEmpty
+          ? null
+          : _descriptionController.text.trim(),
     );
     await context.read<PerformanceProvider>().addPerformance(performance);
     if (mounted) {
@@ -181,7 +182,27 @@ ${description.isNotEmpty ? '\nNotes:\n$description' : ''}
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Daily Performance'),
+        title: SizedBox(
+          height: 24,
+          child: Marquee(
+            text: 'Daily Performance',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+            scrollAxis: Axis.horizontal,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            blankSpace: 40.0,
+            velocity: 30.0,
+            pauseAfterRound: Duration(seconds: 1),
+            startPadding: 10.0,
+            accelerationDuration: Duration(seconds: 1),
+            accelerationCurve: Curves.linear,
+            decelerationDuration: Duration(milliseconds: 500),
+            decelerationCurve: Curves.easeOut,
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.share),

@@ -4,14 +4,15 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:sabaq/models/student.dart';
 import 'package:sabaq/providers/student_provider.dart';
-
 import '../performance/daily_performance_screen.dart';
 import './add_student_screen.dart';
 import '../performance/all_students_performance_overview_screen.dart';
 import './student_details_screen.dart';
 import '../auth/login_screen.dart';
+import '../settings/backup_restore_screen.dart';
 import 'dart:io'; // Import for File
 import 'package:url_launcher/url_launcher.dart';
+import 'package:marquee/marquee.dart';
 
 class StudentListScreen extends StatefulWidget {
   final int sectionId;
@@ -25,6 +26,7 @@ class _StudentListScreenState extends State<StudentListScreen> {
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   List<Student> _filteredStudents = [];
+  StudentProvider? _studentProvider; // Save provider reference
 
   @override
   void initState() {
@@ -56,17 +58,19 @@ class _StudentListScreenState extends State<StudentListScreen> {
   }
 
   @override
-  void dispose() {
-    context.read<StudentProvider>().clearStudents();
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     debugPrint('StudentListScreen didChangeDependencies called');
+    _studentProvider = Provider.of<StudentProvider>(context, listen: false); // Save reference
     _filterStudents();
+  }
+
+  @override
+  void dispose() {
+    // Use the saved provider reference and prevent UI notifications on clear
+    _studentProvider?.clearStudents(notify: false); 
+    _searchController.dispose();
+    super.dispose();
   }
 
   void _filterStudents() {
@@ -222,7 +226,27 @@ class _StudentListScreenState extends State<StudentListScreen> {
                 ),
                 autofocus: true,
               )
-            : const Text('Student List'),
+            : SizedBox(
+                height: 24,
+                child: Marquee(
+                  text: 'Student List',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  scrollAxis: Axis.horizontal,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  blankSpace: 40.0,
+                  velocity: 30.0,
+                  pauseAfterRound: Duration(seconds: 1),
+                  startPadding: 10.0,
+                  accelerationDuration: Duration(seconds: 1),
+                  accelerationCurve: Curves.linear,
+                  decelerationDuration: Duration(milliseconds: 500),
+                  decelerationCurve: Curves.easeOut,
+                ),
+              ),
         actions: [
           if (!_isSearching)
             IconButton(
@@ -259,10 +283,37 @@ class _StudentListScreenState extends State<StudentListScreen> {
                 }
               },
             ),
-          IconButton(
-            icon: const Icon(Icons.info_outline),
-            onPressed: _showDeveloperInfo,
-          ),
+          if (!_isSearching)
+            PopupMenuButton<String>(
+              onSelected: (value) {
+                if (value == 'settings') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const BackupRestoreScreen(),
+                    ),
+                  );
+                } else if (value == 'info') {
+                  _showDeveloperInfo();
+                }
+              },
+              itemBuilder: (BuildContext context) => [
+                const PopupMenuItem<String>(
+                  value: 'settings',
+                  child: ListTile(
+                    leading: Icon(Icons.settings),
+                    title: Text('Settings'),
+                  ),
+                ),
+                const PopupMenuItem<String>(
+                  value: 'info',
+                  child: ListTile(
+                    leading: Icon(Icons.info_outline),
+                    title: Text('About'),
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
       body:

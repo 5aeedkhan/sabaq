@@ -5,6 +5,7 @@ import 'package:sabaq/database/database_helper.dart';
 import 'package:sabaq/models/student.dart';
 import '../students/student_list_screen.dart';
 import 'login_screen.dart';
+import 'package:marquee/marquee.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);
@@ -128,6 +129,41 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
+  Widget _buildAppBarTitle(String title) {
+    if (title.length > 15) {
+      return SizedBox(
+        height: 24,
+        child: Marquee(
+          text: title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+          scrollAxis: Axis.horizontal,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          blankSpace: 40.0,
+          velocity: 30.0,
+          pauseAfterRound: Duration(seconds: 1),
+          startPadding: 10.0,
+          accelerationDuration: Duration(seconds: 1),
+          accelerationCurve: Curves.linear,
+          decelerationDuration: Duration(milliseconds: 500),
+          decelerationCurve: Curves.easeOut,
+        ),
+      );
+    } else {
+      return const Text(
+        'Register',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -158,7 +194,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         return shouldPop ?? false;
       },
       child: Scaffold(
-        appBar: AppBar(title: const Text('Register')),
+        appBar: AppBar(
+          title: _buildAppBarTitle('Register'),
+        ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
           child: Form(

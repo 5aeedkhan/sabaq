@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:sabaq/models/student.dart';
 import 'package:sabaq/providers/student_provider.dart';
 import '../../viewmodels/add_student_viewmodel.dart';
+import 'package:marquee/marquee.dart';
 
 class AddStudentScreen extends StatefulWidget {
   final int sectionId;
@@ -85,7 +86,27 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add New Student'),
+        title: SizedBox(
+          height: 24,
+          child: Marquee(
+            text: 'Add New Student',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+            scrollAxis: Axis.horizontal,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            blankSpace: 40.0,
+            velocity: 30.0,
+            pauseAfterRound: Duration(seconds: 1),
+            startPadding: 10.0,
+            accelerationDuration: Duration(seconds: 1),
+            accelerationCurve: Curves.linear,
+            decelerationDuration: Duration(milliseconds: 500),
+            decelerationCurve: Curves.easeOut,
+          ),
+        ),
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -134,20 +155,11 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
               ),
               const SizedBox(height: 16),
               _buildTextField(
-                label: 'Student ID',
-                icon: Icons.badge,
-                onSaved: (value) => _viewModel.studentId = value!,
-                validator: (value) =>
-                    value!.isEmpty ? 'Please enter a student ID' : null,
-              ),
-              const SizedBox(height: 16),
-              _buildTextField(
                 label: 'Phone Number',
                 icon: Icons.phone,
                 keyboardType: TextInputType.phone,
                 onSaved: (value) => _viewModel.phoneNumber = value!,
-                validator: (value) =>
-                    value!.isEmpty ? 'Please enter a phone number' : null,
+                validator: (value) => null,
               ),
               const SizedBox(height: 40),
               ElevatedButton.icon(
