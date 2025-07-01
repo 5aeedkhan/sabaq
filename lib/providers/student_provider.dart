@@ -32,7 +32,7 @@ class StudentProvider with ChangeNotifier {
   void clearStudents({bool notify = true}) {
     _students = [];
     if (notify) {
-      notifyListeners();
+    notifyListeners();
     }
   }
 

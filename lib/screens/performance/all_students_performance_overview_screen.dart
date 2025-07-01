@@ -26,6 +26,7 @@ class _AllStudentsPerformanceOverviewScreenState
   bool _isLoading = true;
   PerformanceViewType _viewType = PerformanceViewType.recent;
   DateTime _selectedDate = DateTime.now();
+  bool _isLoadingOverlay = false;
 
   @override
   void initState() {
@@ -53,8 +54,12 @@ class _AllStudentsPerformanceOverviewScreenState
     if (picked != null && picked != _selectedDate) {
       setState(() {
         _selectedDate = picked;
+        _isLoadingOverlay = true;
       });
       await _loadData();
+      setState(() {
+        _isLoadingOverlay = false;
+      });
     }
   }
 
@@ -308,18 +313,28 @@ class _AllStudentsPerformanceOverviewScreenState
                 _viewType == PerformanceViewType.recent,
                 _viewType == PerformanceViewType.single,
               ],
-              onPressed: (index) {
-                setState(() {
-                  _viewType = index == 0
-                      ? PerformanceViewType.recent
-                      : PerformanceViewType.single;
-                  _loadData();
-                });
-              },
+              onPressed: _isLoading || _isLoadingOverlay
+                  ? null
+                  : (index) async {
+                      if ((_viewType == PerformanceViewType.recent && index == 0) ||
+                          (_viewType == PerformanceViewType.single && index == 1)) {
+                        return;
+                      }
+                      setState(() {
+                        _viewType = index == 0
+                            ? PerformanceViewType.recent
+                            : PerformanceViewType.single;
+                        _isLoadingOverlay = true;
+                      });
+                      await _loadData();
+                      setState(() {
+                        _isLoadingOverlay = false;
+                      });
+                    },
               borderRadius: BorderRadius.circular(8),
               selectedColor: Colors.white,
-              color: Colors.white,
-              fillColor: Colors.blue.shade700,
+              color: Colors.white.withOpacity(0.7),
+              fillColor: Colors.blue.withOpacity(0.5),
               splashColor: Colors.blue.shade900,
               highlightColor: Colors.blue.shade800,
               constraints: const BoxConstraints(minHeight: 36.0),
