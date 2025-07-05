@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "6149419200",
-    "project_id": "madrassa-aa9e6",
-    "storage_bucket": "madrassa-aa9e6.firebasestorage.app"
+    "project_number": "803380758679",
+    "project_id": "sabaq-681b2",
+    "storage_bucket": "sabaq-681b2.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:6149419200:android:785d3841869b20eadb3d25",
+        "mobilesdk_app_id": "1:803380758679:android:555f7b1683fedbf41341d2",
         "android_client_info": {
-          "package_name": "com.example.sabaq"
+          "package_name": "com.itartificer.sabaq"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyD2ui_S00O3ai5nS-SjAk_nxl_1fLUBhTI"
+          "current_key": "AIzaSyBHPBr7UU6HhaUXAx0Gtf32ZJ9Xf1gtETQ"
         }
       ],
       "services": {

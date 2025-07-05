@@ -25,15 +25,9 @@ class DefaultFirebaseOptions {
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return macos;
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -47,29 +41,48 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyBJOn4vaymxvttKTIN8n_gIy2q3wCJ7nCM',
-    appId: '1:6149419200:web:835d0f8e756f4ddcdb3d25',
-    messagingSenderId: '6149419200',
-    projectId: 'madrassa-aa9e6',
-    authDomain: 'madrassa-aa9e6.firebaseapp.com',
-    storageBucket: 'madrassa-aa9e6.firebasestorage.app',
-    measurementId: 'G-HJ3TVGTZ5P',
+    apiKey: 'AIzaSyDdDLcghEWBwdVWkiXexOqeqawPRv8O-w0',
+    appId: '1:803380758679:web:7aacc80a886aa3cf1341d2',
+    messagingSenderId: '803380758679',
+    projectId: 'sabaq-681b2',
+    authDomain: 'sabaq-681b2.firebaseapp.com',
+    storageBucket: 'sabaq-681b2.firebasestorage.app',
+    measurementId: 'G-PY7CBZY197',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyD2ui_S00O3ai5nS-SjAk_nxl_1fLUBhTI',
-    appId: '1:6149419200:android:785d3841869b20eadb3d25',
-    messagingSenderId: '6149419200',
-    projectId: 'madrassa-aa9e6',
-    storageBucket: 'madrassa-aa9e6.firebasestorage.app',
+    apiKey: 'AIzaSyBHPBr7UU6HhaUXAx0Gtf32ZJ9Xf1gtETQ',
+    appId: '1:803380758679:android:555f7b1683fedbf41341d2',
+    messagingSenderId: '803380758679',
+    projectId: 'sabaq-681b2',
+    storageBucket: 'sabaq-681b2.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyAcyGw0iGSy2YWHPQ6PsDQgJE7vQrrRMLQ',
-    appId: '1:6149419200:ios:89fcf02a8135a22adb3d25',
-    messagingSenderId: '6149419200',
-    projectId: 'madrassa-aa9e6',
-    storageBucket: 'madrassa-aa9e6.firebasestorage.app',
+    apiKey: 'AIzaSyCTlufJgolOD70EZ6SJx9PrN_Adm4LAISM',
+    appId: '1:803380758679:ios:3f5820ca9bc1da321341d2',
+    messagingSenderId: '803380758679',
+    projectId: 'sabaq-681b2',
+    storageBucket: 'sabaq-681b2.firebasestorage.app',
     iosBundleId: 'com.example.sabaq',
+  );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyCTlufJgolOD70EZ6SJx9PrN_Adm4LAISM',
+    appId: '1:803380758679:ios:3f5820ca9bc1da321341d2',
+    messagingSenderId: '803380758679',
+    projectId: 'sabaq-681b2',
+    storageBucket: 'sabaq-681b2.firebasestorage.app',
+    iosBundleId: 'com.example.sabaq',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyDdDLcghEWBwdVWkiXexOqeqawPRv8O-w0',
+    appId: '1:803380758679:web:252347cdc164832f1341d2',
+    messagingSenderId: '803380758679',
+    projectId: 'sabaq-681b2',
+    authDomain: 'sabaq-681b2.firebaseapp.com',
+    storageBucket: 'sabaq-681b2.firebasestorage.app',
+    measurementId: 'G-9D7FC83E4S',
   );
 }
